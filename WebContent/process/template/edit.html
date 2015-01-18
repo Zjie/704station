@@ -1,0 +1,376 @@
+<html>
+<head>
+<title>工序模板编辑</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="bom" style="margin: 10 0 10 0"></div>
+	<div id="button">
+		<button type="button" onclick="showProcess()">添加工序</button>
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+	</div>
+	<div id="addProcess"></div>
+<script type="text/javascript">
+var processIdx = -1;
+Ext.onReady(function() {
+	var mtPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		layout: 'form',
+		id: 'mtPanel',
+		width: 400,
+		items: [
+			{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '模板名称',
+		            name: 'name',
+		            id: 'name',
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '族名称',
+					name: 'groupName',
+					id: 'groupName'
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '产品代号',
+					name: 'productCodeString',
+					id: 'productCodeString'
+				}]
+			}
+		]
+	});
+	var store = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'process',
+	    id: 'processStore',
+	    data: [],
+	    groupField: 'phase'
+	});
+	var groupingFeature= Ext.create('Ext.grid.feature.Grouping',{
+		id: 'groupingFeature',
+        groupHeaderTpl: '{name} 共{rows.length}个'
+    });
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'gridPanel',
+	    features: [groupingFeature],
+	    store: store,
+	    renderTo: 'bom',
+	    columns:[{
+	        hidden: true,
+	        text: "工序id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	    	hidden: true,
+	        text: "生产阶段",
+	        dataIndex: 'phase',
+	        //sortable: false
+	    },{
+	    	text: "工序组",
+	    	dataIndex : 'groupName',
+	    	//sortable: false
+	    },{
+	        text: "工作内容",
+	        dataIndex: 'content',
+	        //sortable: false
+	    },{
+	        text: "周期预估",
+	        dataIndex: 'measure',
+	        //sortable: false
+	    },{
+	        text: "备注",
+	        dataIndex: 'remark',
+	        //sortable: false
+	    },{
+	    	text: "基数",
+	    	dataIndex : 'base',
+	    	//sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "updater",
+			//sortable: false
+		},{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: "<a href='#' onclick='jump(\"../process/edit.html?pid={id}\")'>编辑</a>&nbsp<a style='color: red;' onclick='deleteProcess()'>删除</a>"
+	    }]
+	});
+	//加载初始数据
+	initial();
+	//添加工序面板
+	initializeAddProcessPanel()
+	hideProcess();
+});
+
+//加载初始数据
+function initial() {
+	var ptid = getParams('ptid');
+	if (ptid != null) {
+		Ext.Ajax.request({
+		    url: 'list.do',
+		    params: {'id': ptid},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var mt = result.data.items[0];
+		    			var mtStore = Ext.getStore('processStore');
+		    			//将工序加入grid中
+						mtStore.add(mt.processes);
+						Ext.getCmp('name').setValue(mt.name);
+						Ext.getCmp('groupName').setValue(mt.groupName);
+						Ext.getCmp('productCodeString').setValue(mt.productCodeString);
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+//初始化添加工序面板
+function initializeAddProcessPanel() {
+	
+	var searchForm = new Ext.form.FormPanel(
+	{
+		region: 'north',
+		id : 'searchForm',
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'combo',
+						labelAlign: "right",
+			            fieldLabel: '生产阶段',
+			            name: 'phase',
+			            store: phase,
+			            queryMode: 'local',
+					    displayField: 'name',
+					    valueField: 'value'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工序组',
+			            name: 'groupName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工作内容',
+			            name: 'content'
+					}]
+				}
+			]
+		}],
+		buttons : [{
+			text : '查询',
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('addProcessStore');
+				var params = form.getValues();
+				if (params['groupName'] == '') {
+					params['groupName'] = -1;
+				}
+				mtStore.proxy['extraParams'] = params;
+				mtStore.load();
+			}
+		},{
+			text : '关闭面板',
+			handler : function() {
+				hideProcess();
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'process',
+	    autoLoad: true,
+	    id: 'addProcessStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : '../process/list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+		id: 'addProcessGridPanel',
+	    title: '工序列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "工序id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "生产阶段",
+	        dataIndex: 'phase',
+	        //sortable: false
+	    },{
+	    	text: "工序组",
+	    	dataIndex : 'groupName',
+	    	//sortable: false
+	    },{
+	        text: "工作内容",
+	        dataIndex: 'content',
+	        //sortable: false
+	    },{
+	        text: "周期预估",
+	        dataIndex: 'measure',
+	        //sortable: false
+	    },{
+	        text: "备注",
+	        dataIndex: 'remark',
+	        //sortable: false
+	    },{
+	    	text: "基数",
+	    	dataIndex : 'base',
+	    	//sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "updater",
+			//sortable: false
+		},{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: "<a href='#' onclick='addToTemplate()'>添加到模板</a>"
+	    }],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+	var wrapperPanel = new Ext.panel.Panel({
+		id: 'wrapperPanel',
+		renderTo: 'addProcess',
+		items: [searchForm, gridPanel]
+	});
+}
+//显示物料添加面板
+function showProcess() {
+	Ext.getCmp("wrapperPanel").show();
+	Ext.get("addProcess").setHeight(500);
+}
+//隐藏物料添加面板
+function hideProcess() {
+	Ext.get("addProcess").setHeight(0);
+	Ext.getCmp("wrapperPanel").hide();
+}
+//删除工序
+function deleteProcess() {
+	var gridPanel = Ext.getCmp('gridPanel');
+	var store = gridPanel.getStore();
+	var record = gridPanel.getSelectionModel().getSelection();
+	store.remove(record);
+}
+//保存模板
+function save() {
+	var params = {};
+	var ptid = getParams('ptid');
+	if (ptid != null) {
+		params['id'] = ptid;
+	} else {
+		params['id'] = -1;
+	}
+	params['name'] = Ext.getCmp('name').getValue();
+	params['groupName'] = Ext.getCmp('groupName').getValue();
+	params['productCodeString'] = Ext.getCmp('productCodeString').getValue();
+	var mtStore = Ext.getStore('processStore');
+	var items = mtStore.data.items;
+	for(var i=0; i<items.length; i++){ 
+		var record = items[i].data;
+		params['processes[' + i + '].id'] = record.id;
+		params['processes[' + i + '].phase'] = record.phase;
+		params['processes[' + i + '].content'] = record.content;
+		params['processes[' + i + '].groupName'] = record.groupName;
+		params['processes[' + i + '].measure'] = record.measure;
+		params['processes[' + i + '].remark'] = record.remark;
+		params['processes[' + i + '].base'] = record.base;
+	}
+	$.post('saveOrUpdate.do', params, function(response) {
+		var result = eval('('+response+')');
+		if (result.success) {
+    		Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', result.msg);
+    	}
+	});
+}
+//跳转
+function jump(url) {
+	window.open(url);
+}
+//将工序加到模板中
+function addToTemplate() {
+	var gridPanel = Ext.getCmp('addProcessGridPanel');
+	var record = gridPanel.getSelectionModel().getSelection();
+	//template
+	var store = Ext.getCmp('gridPanel').getStore();
+	if (store.findExact('id', record[0].data.id) > 0) {
+		Ext.Msg.alert('系统提示', "该工序已经存在模板中");
+		return;
+	}
+	store.add(record);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<html>
+<head>
+	<title>订单列表</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function() {
+	var searchForm = new Ext.form.FormPanel(
+	{
+		region: 'north',
+		id : 'searchForm',
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '序号',
+			            name: 'no'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '课题编号',
+			            name: 'project'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '主管工艺',
+			            name: 'process'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '使用型号',
+			            name: 'model'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品名称',
+			            name: 'productName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品代号',
+			            name: 'productCode'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品批次及编号',
+			            name: 'productBatchId'
+					}]
+				}
+			]
+		}],
+		buttons : [{
+			text : '查询',
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('orderStore');
+				mtStore.proxy['extraParams'] = form.getValues();
+				mtStore.load();
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'order',
+	    autoLoad: true,
+	    id: 'orderStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : '/order/list/list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '订单列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: new Ext.XTemplate(
+	        	'<tpl if="infoIsChecked==1">已确认</tpl>',
+	        	'<tpl if="infoIsChecked==0"><a style="color:blue" href = "/order/list/edit.html?orderId={id}&isGongyi=yes">进行确认</tpl>'
+			)
+	    },{
+	    	text: "确认时间",
+			dataIndex: 'infoCheckTime',
+	    },{
+	    	text: "确认者",
+	    	dataIndex: 'processChecker'
+	    },{
+	        text: "订单编号",
+	        dataIndex: 'no',
+	        //sortable: false
+	    },{
+	        text: "课题编号",
+	        dataIndex: 'project',
+	        //sortable: false
+	    },{
+	    	text: "主管工艺",
+	    	dataIndex : 'process',
+	    	//sortable: false
+	    },{
+	        text: "使用型号",
+	        dataIndex: 'model',
+	        //sortable: false
+	    },{
+			text: "产品名称",
+			dataIndex: "productName",
+			//sortable: false
+		},{
+			text: "产品代号",
+			dataIndex: "productCode",
+			//sortable: false
+		},
+
+
+		{
+			text: '科二投产数量',
+			dataIndex: "ke2ProduceNum"
+		},{
+			text: '科二典试数量',
+			dataIndex: "ke2DianshiNum"
+		},
+
+
+		{
+	    	text: "计划调整情况",
+	    	dataIndex : 'planToAdjust',
+	    	//sortable: false
+	    },{
+	        text: "车间计划数量",
+	        dataIndex: 'produceNum',
+	        //sortable: false
+	    },{
+			text: "交付数量",
+			dataIndex: "deliveryNum",
+			//sortable: false
+		},{
+			text: "典试计划数量",
+			dataIndex: "testNum",
+			//sortable: false
+		},
+
+
+		{
+			text: "产品批次及编号",
+			dataIndex: "productBatchId",
+			//sortable: false
+		},{
+			text: "备注",
+			dataIndex: "remark",
+			//sortable: false
+		},
+
+
+		{
+	        text: "计划上线日期",
+	        dataIndex: 'onlineDate',
+	        //sortable: false
+	    },{
+	    	text: "计划完成日期",
+	    	dataIndex : 'finishDate',
+	    	//sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "typer",
+			//sortable: false
+		},{
+			text: "排产人",
+			dataIndex: "scheduler",
+			//sortable: false
+		},
+
+
+		{
+	    	text: "物料齐套时间",
+	    	dataIndex : 'materialsCompleteness',
+	    	//sortable: false
+	    },{
+			text: "入库进度",
+			dataIndex: "stockInDate",
+			//sortable: false
+		},{
+			text: "证明书完成时间",
+			dataIndex: "certificateDate",
+			//sortable: false
+		}],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [searchForm, gridPanel]
+	});
+});
+
+</script>
+</body>
+</html>

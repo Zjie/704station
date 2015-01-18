@@ -1,0 +1,288 @@
+<html>
+<head>
+	<title>物料模板列表</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+	<div id="importPanel" style="width: 100%; position: absolute; top: 30%; left: 20%; z-index: 2;"></div>
+<script type="text/javascript">
+Ext.onReady(function() {
+	var searchForm = new Ext.form.FormPanel(
+	{
+		region: 'north',
+		id : 'searchForm',
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '模板名称',
+			            name: 'name'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '族名称',
+			            name: 'groupName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品代号',
+			            name: 'productCode'
+					}]
+				}
+			]
+		}],
+		buttons : [{
+			text : '查询',
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('materialTemplateStore');
+				mtStore.proxy['extraParams'] = form.getValues();
+				mtStore.load();
+			}
+		},{
+			text : '新增',
+			handler : function() {
+				window.location.href = "edit.html";
+			}
+		},{
+			text : '导入',
+			handler : showImport
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'materialTemplate',
+	    autoLoad: true,
+	    id: 'materialTemplateStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : 'list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '物料模板列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "模板id",
+	        dataIndex: 'id',
+	        ////sortable: false
+	    },{
+	        text: "模板名称",
+	        dataIndex: 'name',
+	        ////sortable: false
+	    },{
+	        text: "族名称",
+	        dataIndex: 'groupName',
+	        ////sortable: false
+	    },{
+	    	text: "产品代号",
+	    	dataIndex : 'productCode',
+	    	////sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        ////sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "updater",
+			////sortable: false
+		},{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: "<a href='edit.html?mtId={id}'>编辑</a>&nbsp<a style='color: red;' onclick='deleteTemplate({id})'>删除</a>"
+	    }],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [searchForm, gridPanel]
+	});
+	var importIMEIForm = new Ext.form.FormPanel(
+	{
+		renderTo: "importPanel",
+		frame : true,
+		monitorValid : true,
+		autoScroll : false,
+		fileUpload : true,
+		width : 500,
+		id : 'importIMEIForm',
+		items : [ {
+			xtype : 'fieldset',
+			width : 400,
+			title : '物料模板导入',
+			layout : 'anchor',
+			defaults : {
+				anchor : '100%'
+			},
+			collapsible : true,
+			autoHeight : true,
+			defaultType : 'textfield',
+			items : [ {
+				name : 'file',
+				fieldLabel : '文件',
+				xtype : 'filefield',
+				id : 'iphone_uploadfile',
+				allowBlank : false,
+				blankText : "请选择您要导入的excel文件",
+				buttonText : '选择文件...',
+				msgTarget: 'under'
+			} ]
+		} ],
+		buttons : [{
+			text : '导入',
+			formBind : true,
+			handler : function() {
+				var form = this.up('form').getForm();
+				if (form.isValid()) {
+					var file_suffix = Ext.getCmp("iphone_uploadfile").getValue();
+					if (!file_suffix.match(".xlsx") || !file_suffix.match(".xls")) {
+						Ext.Msg.show({
+							title : '提示',
+							msg : "请选择.xls或者.xlsx文件上传!",
+							buttons : Ext.Msg.OK,
+							icon : Ext.MessageBox.ERROR
+						});
+						return;
+					}
+					var uploadMsg = '';
+					var finalUrl = '';
+					importIMEIForm.form.submit({
+						url : 'upload.do',
+						method : 'POST',
+						//waitTitle : '提示',
+						//waitMsg : '正在导入文件，请您耐心等候...',
+						failure : function(form, action) {
+							uploadMsg = action.result.msg;
+							finalUrl = action.result.errorUrl;
+						},
+						success : function(form, action) {
+							uploadMsg = action.result.msg;
+							finalUrl = "list.html";
+						}
+					});
+
+					var msgBox = Ext.MessageBox.show({    
+				        title:'提示',    
+				        msg:'导入物料模板',    
+				        modal:true,    
+				        width:300,    
+				        progress:true   
+				    });
+				    var task = {    
+				        run:function(){
+				        	$.ajax({
+						        type: "POST",
+						        url: "importProcess.do",
+						        success: function(data) {
+						            var result = eval('(' + data + ')'); 
+						            if (!result.wait) {
+										//生成进度条文字    
+							            var progressText = '当前完成度:' + result.cur + '/' + result.totalNum;    
+							            //更新信息提示对话框    
+							            msgBox.updateProgress(result.cur/result.totalNum, progressText, '');     
+							            if (result.totalNum == result.cur)    
+							            {
+							                Ext.TaskManager.stop(task);
+							                Ext.Msg.alert('系统提示', uploadMsg, 
+												function(buttonId, text, opt) {
+						                        	msgBox.hide();
+						                        	window.location.href = finalUrl;
+						                        });
+							            }
+						            }
+						            
+						        }
+						    });
+				        },    
+				        interval:3000    
+				    }    
+				    Ext.TaskManager.start(task);
+				}
+			}
+		},{
+			text : '关闭',
+			handler : hideImport
+		}]
+	});
+	hideImport();
+});
+function deleteTemplate(tid) {
+	Ext.Msg.show({
+	    title: '系统提示',
+	    msg: '您确定要删除该模板？',
+	    buttons: Ext.Msg.OKCANCEL,
+	    fn: function(buttonId, text, opt) {
+	    	if (buttonId == 'ok'){
+				$.ajax({
+			        type: "POST",
+			        url: "delete.do",
+			        data: "tid=" + tid,
+			        success: function(data) {
+			            var result = eval('(' + data + ')');
+			            Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+			            	if (buttonId == 'ok'){
+			            		if (result.state == 0) {
+					            	Ext.getStore("materialTemplateStore").load();
+					            }
+			            	}
+			            });
+			        }
+			    });
+		    }
+	    },
+	    icon: Ext.window.MessageBox.WARNING
+	});
+}
+//显示导入面板
+function showImport() {
+	Ext.getCmp("importIMEIForm").show();
+	Ext.get("importPanel").setHeight(500);
+}
+//隐藏导入面板
+function hideImport() {
+	Ext.get("importPanel").setHeight(0);
+	Ext.getCmp("importIMEIForm").hide();
+}
+</script>
+</body>
+</html>

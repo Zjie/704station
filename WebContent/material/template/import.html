@@ -1,0 +1,122 @@
+<html>
+<head>
+<title>物料模板导入</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+<div id="content" style="padding:10px"></div>
+<script type="text/javascript">
+Ext.onReady(function() {
+var importIMEIForm = new Ext.form.FormPanel(
+{
+	renderTo: "content",
+	frame : true,
+	monitorValid : true,
+	autoScroll : false,
+	fileUpload : true,
+	width : 500,
+	id : 'importIMEIForm',
+	items : [ {
+		xtype : 'fieldset',
+		width : 400,
+		title : '物料模板导入',
+		layout : 'anchor',
+		defaults : {
+			anchor : '100%'
+		},
+		collapsible : true,
+		autoHeight : true,
+		defaultType : 'textfield',
+		items : [ {
+			name : 'file',
+			fieldLabel : '文件',
+			xtype : 'filefield',
+			id : 'iphone_uploadfile',
+			allowBlank : false,
+			blankText : "请选择您要导入的excel文件",
+			buttonText : '选择文件...',
+			msgTarget: 'under'
+		} ]
+	} ],
+	buttons : [{
+		text : '导入',
+		formBind : true,
+		handler : function() {
+			var form = this.up('form').getForm();
+			if (form.isValid()) {
+				var file_suffix = Ext.getCmp("iphone_uploadfile").getValue();
+				if (!file_suffix.match(".xlsx") || !file_suffix.match(".xls")) {
+					Ext.Msg.show({
+						title : '提示',
+						msg : "请选择.xls或者.xlsx文件上传!",
+						buttons : Ext.Msg.OK,
+						icon : Ext.MessageBox.ERROR
+					});
+					return;
+				}
+				var uploadMsg = '';
+				var finalUrl = '';
+				importIMEIForm.form.submit({
+					url : 'upload.do',
+					method : 'POST',
+					//waitTitle : '提示',
+					//waitMsg : '正在导入文件，请您耐心等候...',
+					failure : function(form, action) {
+						uploadMsg = action.result.msg;
+						finalUrl = action.result.errorUrl;
+					},
+					success : function(form, action) {
+						uploadMsg = action.result.msg;
+						finalUrl = "import.html";
+					}
+				});
+
+				var msgBox = Ext.MessageBox.show({    
+			        title:'提示',    
+			        msg:'导入物料模板',    
+			        modal:true,    
+			        width:300,    
+			        progress:true   
+			    });
+			    var task = {    
+			        run:function(){
+			        	$.ajax({
+					        type: "POST",
+					        url: "importProcess.do",
+					        success: function(data) {
+					            var result = eval('(' + data + ')'); 
+					            if (!result.wait) {
+									//生成进度条文字    
+						            var progressText = '当前完成度:' + result.cur + '/' + result.totalNum;    
+						            //更新信息提示对话框    
+						            msgBox.updateProgress(result.cur/result.totalNum, progressText, '');     
+						            if (result.totalNum == result.cur)    
+						            {
+						                Ext.TaskManager.stop(task);
+						                Ext.Msg.alert('系统提示', uploadMsg, 
+											function(buttonId, text, opt) {
+					                        	msgBox.hide();
+					                        	window.location.href = finalUrl;
+					                        });
+						            }
+					            }
+					            
+					        }
+					    });
+			        },    
+			        interval:1000    
+			    }    
+			    Ext.TaskManager.start(task);
+			}
+		}
+	}]
+});
+})
+</script>
+</body>
+</html>

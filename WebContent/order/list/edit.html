@@ -1,0 +1,901 @@
+<html>
+<head>
+<title>订单编辑</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+<script type="text/javascript" src="../../extjs/ext-lang-zh_CN.js"></script>
+
+<link rel="stylesheet" type="text/css"
+	href="../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../resources/js/common.js"></script>
+
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="bom" style="padding: 10 0 10 0"></div>
+	<div id="pro" style="padding: 10 0 10 0"></div>
+	<div id="button">
+		<button id="addMaterialButton" type="button" onclick="showMaterial()">添加物料</button>
+		<button id="addProcessButton" type="button" onclick="showProcess()">添加工序</button>
+		<button id="saveOrderInfo" type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+		<button id="confirmOrderInfoBtn" type="button" onclick="comfirmProcess()">确认并保存订单工序信息</button>
+		<button id="confirmOrderMaterialBtn" type="button" onclick="comfirmMaterial()">确认并保存订单物料信息</button>
+	</div>
+	<div id="addMaterial" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+	<div id="addProcess"></div>
+<script type="text/javascript">
+var keys = ['敏感元件','零件','物资','印制板','线缆','辅料','标准件','CZ3电缆','包装箱'];
+var values = {};
+for (var i = 0; i < keys.length; i++) {
+	values[keys[i]] = i;
+}
+var addedProcess = {};
+var materialIdx = -1;
+Ext.onReady(function() {
+	var isGongyi = getParams('isGongyi');
+	var isWuliao = getParams('isMaterial');
+	var readOnly = false;
+	var hideMaterialPanel = false;
+	if (isGongyi == 'yes') {
+		readOnly = true;
+		hideMaterialPanel = true;
+	}
+	var hideProcessPanel = false;
+	if (isWuliao == 'yes') {
+		readOnly = true;
+		hideProcessPanel = true;
+	}
+	var orderPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		layout: 'form',
+		id: 'orderPanel',
+		//width: 400,
+		items: [
+			{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '订单编号',
+		            name: 'no',
+		            allowBlank: false ,
+		            readOnly: readOnly,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            id: 'no',
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '产品名称',
+		            name: 'productName',
+		            allowBlank: false ,
+		            readOnly: readOnly,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            id: 'productName',
+				},{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '产品代号',
+					allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            readOnly: readOnly,
+					name: 'productCode',
+					id: 'productCode'
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '课题编号',
+					readOnly: readOnly,
+					name: 'project',
+					id: 'project'
+				},{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '主管设计（工艺）',
+					readOnly: readOnly,
+					name: 'process',
+					id: 'process'
+				},{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '使用型号',
+					name: 'model',
+					readOnly: readOnly,
+					id: 'model'
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '科二投产数量',
+					name: 'ke2ProduceNum',
+					readOnly: readOnly,
+					id: 'ke2ProduceNum'
+				},{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '科二典试数量',
+					name: 'ke2DianshiNum',
+					readOnly: readOnly,
+					id: 'ke2DianshiNum'
+				},{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '班组',
+					name: 'banzu',
+					readOnly: readOnly,
+					id: 'banzu'
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'numberfield',
+					labelAlign: "right",
+		            fieldLabel: '车间计划数量',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            readOnly: readOnly,
+		            blankText: '该字段不能为空',
+		            name: 'produceNum',
+		            id: 'produceNum',
+		            minValue : 0
+				},{
+					xtype: 'numberfield',
+					labelAlign: "right",
+		            fieldLabel: '交付数量',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'deliveryNum',
+		            readOnly: readOnly,
+		            id: 'deliveryNum',
+		            minValue : 0
+				},{
+					xtype: 'numberfield',
+					labelAlign: "right",
+		            fieldLabel: '典试计划数量',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'testNum',
+		            readOnly: readOnly,
+		            id: 'testNum',
+		            minValue : 0
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'datefield',
+					labelAlign: "right",
+		            fieldLabel: '计划上线时间',
+		            name: 'onlineDate',
+		            id: 'onlineDate',
+					minValue: '2013-01-01', 
+					format: 'Y-m-d',
+					readOnly: readOnly,
+					showToday: true
+				},{
+					xtype: 'datefield',
+					labelAlign: "right",
+		            fieldLabel: '计划完成时间',
+		            name: 'finishDate',
+		            id: 'finishDate',
+					minValue: '2013-01-01', 
+					format: 'Y-m-d',
+					readOnly: readOnly,
+					showToday: true
+				},{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '产品批次及编号',
+					name: 'productBatchId',
+					id: 'productBatchId',
+					readOnly: readOnly,
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '计划调整情况',
+					readOnly: readOnly,
+					name: 'planToAdjust',
+					id: 'planToAdjust'
+				},{
+		            xtype: 'datefield',
+					labelAlign: "right",
+		            fieldLabel: '物资齐套时间',
+		            name: 'materialsQitaoTime',
+		            id: 'materialsQitaoTime',
+		            readOnly: readOnly,
+					minValue: '2013-01-01', 
+					format: 'Y-m-d',
+					showToday: true
+				},{
+					xtype: 'datefield',
+					labelAlign: "right",
+		            fieldLabel: '零件齐套时间',
+		            name: 'componentCompleteness',
+		            id: 'componentCompleteness',
+		            readOnly: readOnly,
+					minValue: '2013-01-01', 
+					format: 'Y-m-d',
+					showToday: true
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '证书完成进度',
+		            readOnly: readOnly,
+		            name: 'certificateDate',
+		            id: 'certificateDate',
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '入库进度',
+		            name: 'stockInDate',
+		            id: 'stockInDate',
+		            readOnly: readOnly,
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '科二备注',
+		            readOnly: readOnly,
+		            name: 'remark',
+		            id: 'remark',
+				}]
+			}
+		]
+	});
+	initializeAddMaterialPanel();
+	var materialsStore = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'material',
+	    id: 'materialsStore',
+	    data: [],
+	    groupField: 'type'
+	});
+	var materialGF= Ext.create('Ext.grid.feature.Grouping',{
+		id: 'groupingFeature',
+        groupHeaderTpl: '{name} 共{rows.length}个'
+    });
+	var materialPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'materialPanel',
+	    features: [materialGF],
+	    store: materialsStore,
+	    hidden: hideMaterialPanel,
+	    renderTo: 'bom',
+	    columns:[{
+	        hidden: true,
+	        text: "物料id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	    	hidden: true,
+	        text: "物料类别",
+	        dataIndex: 'type',
+	        //sortable: false
+	    },{
+	        text: "名称",
+	        dataIndex: 'name',
+	        //sortable: false
+	    },{
+	    	text: "型号规格",
+	    	dataIndex : 'specification',
+	    	//sortable: false
+	    },{
+	        text: "质量等级或标准要求",
+	        dataIndex: 'level',
+	        //sortable: false
+	    },{
+			text: "计量单位",
+			dataIndex: "uom",
+			//sortable: false
+		},{
+	        text: "单机",
+	        dataIndex: 'singleNum',
+	        //sortable: false
+	    },{
+	    	text: '工艺备份数量',
+	    	dataIndex: 'bkNum',
+	    	//sortable: false
+	    },{
+	    	text: '操作',
+	    	xtype: "templatecolumn",
+	    	tpl: "<a style='color: red;' onclick='deleteMaterial()'>删除</a>"
+	    }]
+	});
+	
+	
+	initializeAddProcessPanel();
+	var processesStore = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'process',
+	    id: 'processesStore',
+	    data: [],
+	    groupField: 'phase'
+	});
+	
+	var processGF= Ext.create('Ext.grid.feature.Grouping',{
+		id: 'groupingFeature2',
+        groupHeaderTpl: '{name} 共{rows.length}部分'
+    });
+	
+	var processPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'processPanel',
+	    features: [processGF],
+	    hidden: hideProcessPanel,
+	    store: processesStore,
+	    renderTo: 'bom',
+	    columns:[{
+	        hidden: true,
+	        text: "步骤id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	    	hidden: true,
+	        text: "步骤类别",
+	        dataIndex: 'phase',
+	        //sortable: false
+	    },{
+	        text: "内容",
+	        dataIndex: 'content',
+	        //sortable: false
+	    },{
+	    	text: '操作',
+	    	xtype: "templatecolumn",
+	    	tpl: "<a style='color: red;' onclick='deleteProcess()'>删除</a>"
+	    }]
+	});
+	
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var orderId = getParams('orderId');
+	if (orderId != null) {
+		Ext.getCmp("no").setDisabled(true)
+		Ext.Ajax.request({
+		    url: 'list.do',
+		    params: {'id': orderId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var info = result.data.items[0];
+						Ext.getCmp('no').setValue(info.no);
+						Ext.getCmp('productName').setValue(info.productName);
+						Ext.getCmp('productCode').setValue(info.productCode);
+
+						Ext.getCmp('project').setValue(info.project);
+						Ext.getCmp('process').setValue(info.process);
+						Ext.getCmp('model').setValue(info.model);
+						Ext.getCmp('productBatchId').setValue(info.productBatchId);
+
+						Ext.getCmp('ke2DianshiNum').setValue(info.ke2DianshiNum);
+						Ext.getCmp('ke2ProduceNum').setValue(info.ke2ProduceNum);
+						Ext.getCmp('banzu').setValue(info.banzu);
+
+						Ext.getCmp('produceNum').setValue(info.produceNum);
+						Ext.getCmp('deliveryNum').setValue(info.deliveryNum);
+						Ext.getCmp('testNum').setValue(info.testNum);
+
+						Ext.getCmp('onlineDate').setValue(info.onlineDate);
+						Ext.getCmp('finishDate').setValue(info.finishDate);
+
+						Ext.getCmp('planToAdjust').setValue(info.planToAdjust);
+						Ext.getCmp('materialsQitaoTime').setValue(info.materialsQitaoTime);
+						Ext.getCmp('componentCompleteness').setValue(info.componentCompleteness);
+						Ext.getCmp('stockInDate').setValue(info.stockInDate);
+						Ext.getCmp('certificateDate').setValue(info.certificateDate);
+						Ext.getCmp('remark').setValue(info.remark);
+
+		    			var mtStore = Ext.getStore('materialsStore');
+						mtStore.add(info.orderMaterials);
+		    			var ps = Ext.getStore('processesStore');
+						ps.add(info.orderProcesses);
+		    		}
+		    	}
+		    }
+		});
+	}
+	var isGongyi = getParams('isGongyi');
+	var isWuliao = getParams('isMaterial');
+	if (isGongyi == 'yes') {
+		//如果是工艺员，则要对订单信息进行确认
+		$('#addMaterialButton').hide();
+		$('#confirmOrderMaterialBtn').hide();
+		$('#saveOrderInfo').hide();
+	} else if (isWuliao == 'yes') {
+		//如果是物料员
+		$('#confirmOrderInfoBtn').hide();
+		$('#addProcessButton').hide();
+		$('#saveOrderInfo').hide();
+	}else {
+		$('#confirmOrderInfoBtn').hide();
+		$('#confirmOrderMaterialBtn').hide();
+	}
+}
+//显示物料添加面板
+function showMaterial() {
+	Ext.getCmp("materialWrapperPanel").show();
+	Ext.get("addMaterial").setHeight(500);
+}
+//隐藏物料添加面板
+function hideMaterial() {
+	Ext.get("addMaterial").setHeight(0);
+	Ext.getCmp("materialWrapperPanel").hide();
+}
+//删除物料
+function deleteMaterial() {
+	var gridPanel = Ext.getCmp('materialPanel');
+	var store = gridPanel.getStore();
+	var record = gridPanel.getSelectionModel().getSelection();
+	var omid = record[0].data.id;
+	if (omid <= 0) {
+		store.remove(record);
+	} else {
+		$.post("/order/deleteOrderMaterial.do", {'omid':omid}, function(response) {
+			if (response.success) {
+				Ext.Msg.alert('系统提示', "删除成功", function(buttonId, text, opt) {
+	            	store.remove(record);
+	            });
+			} else {
+	    		Ext.Msg.alert('系统提示', response.msg);
+	    	}
+		});
+	}
+}
+//显示物料添加面板
+function showProcess() {
+	Ext.getCmp("processWrapperPanel").show();
+	Ext.get("addProcess").setHeight(500);
+}
+//隐藏物料添加面板
+function hideProcess() {
+	Ext.get("addProcess").setHeight(0);
+	Ext.getCmp("processWrapperPanel").hide();
+}
+//删除工序
+function deleteProcess() {
+	var gridPanel = Ext.getCmp('processPanel');
+	var store = gridPanel.getStore();
+	var record = gridPanel.getSelectionModel().getSelection();
+	var opid = record[0].data.id;
+	var pid = 0 - record[0].data.id;
+	if (addedProcess[pid] == 1) {
+		store.remove(record);
+		addedProcess[pid] = 0;
+	} else {
+		$.post("/order/deleteOrderProcess.do", {'opid':opid}, function(response) {
+			if (response.success) {
+				Ext.Msg.alert('系统提示', "删除成功", function(buttonId, text, opt) {
+	            	store.remove(record);
+	            });
+			} else {
+	    		Ext.Msg.alert('系统提示', response.msg);
+	    	}
+		});
+	}
+}
+//初始化添加物料面板
+function initializeAddMaterialPanel() {
+	var data = new Array();
+	for (var i = 0; i < keys.length; i++) {
+		data[i] = {'type':i,'name':keys[i]};
+	}
+	var addMaterialPanel = new Ext.form.FormPanel({
+		border: 0,
+		layout: 'form',
+		id: 'addMaterialPanel',
+		width: 800,
+		items: [
+			{
+				layout: 'column',
+				border: 0,
+				items: [
+				Ext.create('Ext.form.ComboBox', {
+				    fieldLabel: '物料类别',
+				    labelAlign: "right",
+				    store: {
+				    	fields: ['type', 'name'],
+					    data : data
+				    },
+				    queryMode: 'local',
+				    displayField: 'name',
+				    valueField: 'name',
+				    name: 'type'
+				}),{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '名称',
+		            labelWidth: 120,
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'name'
+				}]
+			},{
+				border: 0,
+				layout: 'column',
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '型号规格',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'specification'
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+					labelWidth: 120,
+		            fieldLabel: '质量等级或标准要求',
+		            name: 'level'
+				}]
+			},{
+				border: 0,
+				layout: 'column',
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '计量单位',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'uom'
+				},{
+					xtype: 'numberfield',
+					labelAlign: "right",
+		            fieldLabel: '单机',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            labelWidth: 120,
+		            name: 'singleNum',
+		            minValue : 0
+				},{
+					xtype: 'numberfield',
+					labelAlign: 'right',
+		            fieldLabel: '工艺备份数量',
+		            name: 'bkNum',
+		            minValue : 0
+				}]
+			}
+		],
+		buttons : [{
+			text : '取消',
+			handler : function() {
+				var form = this.up('form').getForm();
+				form.reset();
+				hideMaterial();
+			}
+		},{
+			text : '添加',
+			formBind : true,
+			handler : function(button, e) {
+				var form = this.up('form').getForm();
+				var params = form.getValues();
+				params['id'] = materialIdx;
+				var mtStore = Ext.getStore('materialsStore');
+				params['typeValue'] = values[params['type']];
+				mtStore.add(params);
+				form.reset();
+				hideMaterial();
+				//id一定不能重复
+				materialIdx -= 1;
+			}
+		}]
+	});
+	var materialWrapperPanel = new Ext.panel.Panel({
+		id: 'materialWrapperPanel',
+		width: 800,
+		renderTo: 'addMaterial',
+		padding: '70 0 0 0',
+		margin: '0 0 0 100',
+		items: [addMaterialPanel]
+	});
+	hideMaterial();
+	
+}
+//初始化添加工序面板
+function initializeAddProcessPanel() {
+	
+	var searchForm = new Ext.form.FormPanel(
+	{
+		region: 'north',
+		id : 'searchForm',
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'combo',
+						labelAlign: "right",
+			            fieldLabel: '生产阶段',
+			            name: 'phase',
+			            store: phase,
+			            queryMode: 'local',
+					    displayField: 'name',
+					    valueField: 'value'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工序组',
+			            name: 'groupName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工作内容',
+			            name: 'content'
+					}]
+				}
+			]
+		}],
+		buttons : [{
+			text : '查询',
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('addProcessStore');
+				var params = form.getValues();
+				if (params['groupName'] == '') {
+					params['groupName'] = -1;
+				}
+				mtStore.proxy['extraParams'] = params;
+				mtStore.load();
+			}
+		},{
+			text : '关闭面板',
+			handler : function() {
+				hideProcess();
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'process',
+	    autoLoad: true,
+	    id: 'addProcessStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : '../../process/process/list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+		id: 'addProcessGridPanel',
+	    title: '工序列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "工序id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "生产阶段",
+	        dataIndex: 'phase',
+	        //sortable: false
+	    },{
+	    	text: "工序组",
+	    	dataIndex : 'groupName',
+	    	//sortable: false
+	    },{
+	        text: "工作内容",
+	        dataIndex: 'content',
+	        //sortable: false
+	    },{
+	        text: "周期预估",
+	        dataIndex: 'measure',
+	        //sortable: false
+	    },{
+	        text: "备注",
+	        dataIndex: 'remark',
+	        //sortable: false
+	    },{
+	    	text: "基数",
+	    	dataIndex : 'base',
+	    	//sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "updater",
+			//sortable: false
+		},{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: "<a href='#' onclick='addToTemplate()'>添加到模板</a>"
+	    }],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+	var wrapperPanel = new Ext.panel.Panel({
+		id: 'processWrapperPanel',
+		renderTo: 'addProcess',
+		items: [searchForm, gridPanel]
+	});
+	hideProcess();
+}
+//将工序加到模板中
+function addToTemplate() {
+	var gridPanel = Ext.getCmp('addProcessGridPanel');
+	var record = gridPanel.getSelectionModel().getSelection();
+	//template
+	var store = Ext.getCmp('processPanel').getStore();
+	var processId = record[0].data.id;
+	if (addedProcess[processId] == 1) {
+		Ext.Msg.alert('系统提示', "该工序已经存在模板中");
+	} else {
+		processId = 0 - processId;
+		addedProcess[processId] = 1;
+	}
+	store.add(record);
+}
+//保存订单
+function save() {
+	var params = internal_get_params();
+	$.post('../saveOrUpdate.do', params, function(response) {
+		if (response.success) {
+    		Ext.Msg.alert('系统提示', "保存成功", function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', response.msg);
+    	}
+	});
+}
+function internal_get_params() {
+	//订单基本信息
+	var params = Ext.getCmp("orderPanel").getForm().getValues();
+	var oid = getParams('orderId');
+	if (oid != null) {
+		params['id'] = oid;
+	} else {
+		params['id'] = -1;
+	}
+	//工序信息
+	var processStore = Ext.getStore('processesStore');
+	var items = processStore.data.items;
+	var i = 0;
+	for(var j=0; j<items.length; j++){ 
+		var record = items[j].data;
+		var pid = 0 - record.id;
+		//只把需要新增的发过去
+		if (addedProcess[pid] == 1) {
+			params['orderProcesses[' + i + '].id'] = pid;
+			params['orderProcesses[' + i + '].phase'] = record.phase;
+			params['orderProcesses[' + i + '].content'] = record.content;
+			params['orderProcesses[' + i + '].groupName'] = record.groupName;
+			params['orderProcesses[' + i + '].measure'] = record.measure;
+			params['orderProcesses[' + i + '].remark'] = record.remark;
+			params['orderProcesses[' + i + '].base'] = record.base;
+			i++;
+		}
+	}
+	//物料信息
+	var mtStore = Ext.getStore('materialsStore');
+	var items = mtStore.data.items;
+	i = 0;
+	for(var j=0; j<items.length; j++){ 
+		var record = items[j].data;
+		if (record.id > 0) continue;
+		params['orderMaterials[' + i + '].id'] = record.id;
+		params['orderMaterials[' + i + '].bkNum'] = record.bkNum;
+		params['orderMaterials[' + i + '].level'] = record.level;
+		params['orderMaterials[' + i + '].name'] = record.name;
+		params['orderMaterials[' + i + '].singleNum'] = record.singleNum;
+		params['orderMaterials[' + i + '].specification'] = record.specification;
+		params['orderMaterials[' + i + '].type'] = record.type;
+		params['orderMaterials[' + i + '].uom'] = record.uom;
+		params['orderMaterials[' + i + '].no'] = record.no;
+		params['orderMaterials[' + i + '].typeValue'] = values[record.type];
+		i++;
+	}
+	return params;
+}
+//确认订单工序信息
+function comfirmProcess() {
+	//先保存，再确认
+	var params = internal_get_params();
+	$.post('../saveOrUpdate.do', params, function(response) {
+		if (response.success) {
+    		//更新订单的确认标志
+    		$.post('/gongyi/confirm.do', {orderId:params['id']}, function(response) {
+    			if (response.success) {
+    				Ext.Msg.alert('系统提示', "确认并保存成功", function(buttonId, text, opt) {
+		            	if (buttonId == 'ok'){
+				        	window.location.href = "/gongyi/list.html";
+		            	}
+		            });
+    			} else {
+		    		Ext.Msg.alert('系统提示', response.msg);
+		    	}
+    		})
+    	} else {
+    		Ext.Msg.alert('系统提示', response.msg);
+    	}
+	});
+}
+//确认订单物料信息
+function comfirmMaterial() {
+	//先保存，再确认
+	var params = internal_get_params();
+	$.post('../saveOrUpdate.do', params, function(response) {
+		if (response.success) {
+    		//更新订单的确认标志
+    		$.post('/assign/confirm/confirm.do', {orderId:params['id']}, function(response) {
+    			if (response.success) {
+    				Ext.Msg.alert('系统提示', "确认并保存成功", function(buttonId, text, opt) {
+		            	if (buttonId == 'ok'){
+				        	window.location.href = "/assign/confirm/list.html";
+		            	}
+		            });
+    			} else {
+		    		Ext.Msg.alert('系统提示', response.msg);
+		    	}
+    		})
+    	} else {
+    		Ext.Msg.alert('系统提示', response.msg);
+    	}
+	});
+}
+</script>
+</body>
+</html>

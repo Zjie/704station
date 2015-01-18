@@ -1,0 +1,135 @@
+<html>
+<head>
+    <title>报工总计</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script language="javascript" type="text/javascript" src="../../My97DatePicker/WdatePicker.js"></script>
+</head>
+<body>
+    <div id="formPanel"></div>
+    <div id="info">
+        <table>
+            <tr>
+                <td style="text-align: right;">总投产数量：</td>
+                <td id="totalProduceNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">在制装配数量：</td>
+                <td id="assemblingNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">完成装配数量：</td>
+                <td id="assembledNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">在验数量：</td>
+                <td id="testingNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">已验数量：</td>
+                <td id="testedNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">总典试数量：</td>
+                <td id="totalDianshiNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">在典数量：</td>
+                <td id="dianshiingNum"></td>
+            </tr>
+            <tr>
+                <td style="text-align: right;">已完成典试数量：</td>
+                <td id="dianshiedNum"></td>
+            </tr>
+        </table>
+    </div>
+<script type="text/javascript">
+Ext.onReady(function(){
+    var searchForm = new Ext.form.FormPanel(
+    {
+        id : 'searchForm',
+        border: 0,
+        renderTo: 'formPanel',
+        items : [{
+            layout: 'form',
+            items: [{
+                layout: 'column',
+                border: 0,
+                items: [{
+                    xtype: 'textfield',
+                    labelAlign: "right",
+                    fieldLabel: '开始时间',
+                    allowBlank: false ,
+                    msgTarget: 'under',
+                    blankText: '该字段不能为空',
+                    name: 'begin',
+                    id: 'begin',
+                    listeners: {
+                        render: function(p) {
+                            p.getEl().on('click', function() {
+                                WdatePicker({
+                                    el: 'begin-inputEl',
+                                    dateFmt: 'yyyy-MM-dd'
+                                });
+
+                            });
+                        }
+                    }
+                },{
+                    xtype: 'textfield',
+                    labelAlign: "right",
+                    fieldLabel: '结束时间',
+                    allowBlank: false ,
+                    msgTarget: 'under',
+                    blankText: '该字段不能为空',
+                    name: 'end',
+                    id: 'end',
+                    listeners: {
+                        render: function(p) {
+                            p.getEl().on('click', function() {
+                                WdatePicker({
+                                    el: 'end-inputEl',
+                                    dateFmt: 'yyyy-MM-dd'
+                                });
+
+                            });
+                        }
+                    }
+                }]
+            }]
+        }],
+        buttons : [{
+            text : '查询',
+            handler : function() {
+                var values = this.up('form').getForm().getValues();
+                Ext.Ajax.request({
+                    url: 'findTotalReport.do',
+                    params: {'begin': values['begin'], 'end' : values['end']},
+                    success: function(response){
+                        if (response.status = 200) {
+                            var result = eval('(' + response.responseText + ')');
+                            if (result.success) {
+                                var data = result.data;
+                                $("#totalProduceNum").text(result.totalProduceNum);
+                                $("#totalDianshiNum").text(result.totalDianshiNum);
+                                $("#assembledNum").text(result.assembledNum);
+                                $("#assemblingNum").text(result.assemblingNum);
+                                $("#testedNum").text(result.testedNum);
+                                $("#testingNum").text(result.testingNum);
+                                $("#dianshiedNum").text(result.dianshiedNum);
+                                $("#dianshiingNum").text(result.dianshiingNum);
+                            }
+                        }
+                    }
+                });
+            }
+        }]
+    });
+    
+})
+</script>
+</body>
+</html>

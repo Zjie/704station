@@ -1,0 +1,183 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="../../resources/css/index.css" />
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+    <div id="reportPanel">
+        <input id="code" style="width:200px"/>
+        <button onclick="doDispatch()">确定报工</button>
+        <br />
+        <span style="color:red;font-size:12px;">如果无法扫出条形码，请手动输入条形码下面的字符串</span>
+    </div>
+<script type="text/javascript">
+Ext.onReady(function(){
+    var store = Ext.create('Ext.data.Store', {
+        model: 'order',
+        autoLoad: true,
+        id: 'orderStore',
+        proxy: {  
+            type: 'ajax',
+            url : '/produce/getCanReportOrder.do',
+            actionMethods: {
+                create: "POST", read: "POST", update: "POST", destroy: "POST"
+            },
+            reader: {
+                //数据格式为json
+                type: 'json',
+                root: 'data' 
+            }
+        }
+    });
+    var gridPanel = Ext.create('Ext.grid.Panel', {
+        title: '请选择一个订单进行报工',
+        region: 'center',
+        disableSelection: false,
+        loadMask: true,
+        store: store,
+        viewConfig: {
+            id: 'orderVidewConfig',
+            trackOver: false,
+            stripeRows: false
+        },
+        columns:[{
+            hidden: true,
+            text: "id",
+            dataIndex: 'id',
+            //sortable: false
+        },{
+            text: "操作",
+            xtype: "templatecolumn",
+            width: 150,
+            // tpl: "<a href='report.do?oid={id}'>报工</a>",
+            tpl :new Ext.XTemplate(
+                '<tpl if="canReportTestNum&lt;=0"><a style="color:#C0C0C0">报工</a>&nbsp&nbsp<a href="confirm.html?oid={id}">确认已上报试验</a></tpl>',
+                '<tpl if="canReportTestNum&gt;0"><a style="color:blue" href = "edit.html?oid={id}">报工</a>&nbsp&nbsp<a href="confirm.html?oid={id}">确认已上报试验</a></tpl>'
+            )
+        },{
+            text: "订单编号",
+            dataIndex: 'no',
+            //sortable: false
+        },{
+            text: "课题编号",
+            dataIndex: 'project',
+            //sortable: false
+        },{
+            text: "主管工艺",
+            dataIndex : 'process',
+            //sortable: false
+        },{
+            text: "使用型号",
+            dataIndex: 'model',
+            //sortable: false
+        },{
+            text: "产品名称",
+            dataIndex: "productName",
+            //sortable: false
+        },{
+            text: "产品代号",
+            dataIndex: "productCode",
+            //sortable: false
+        },
+
+
+        {
+            text: "计划调整数量",
+            dataIndex : 'planToAdjust',
+            //sortable: false
+        },{
+            text: "投产数量",
+            dataIndex: 'produceNum',
+            //sortable: false
+        },{
+            text: "交付数量",
+            dataIndex: "deliveryNum",
+            //sortable: false
+        },{
+            text: "典试数量",
+            dataIndex: "testNum",
+            //sortable: false
+        },
+
+
+        {
+            text: "产品批次及编号",
+            dataIndex: "productBatchId",
+            //sortable: false
+        },{
+            text: "备注",
+            dataIndex: "remark",
+            //sortable: false
+        },
+
+
+        {
+            text: "计划上线日期",
+            dataIndex: 'onlineDate',
+            //sortable: false
+        },{
+            text: "计划完成日期",
+            dataIndex : 'finishDate',
+            //sortable: false
+        },{
+            text: "更新时间",
+            dataIndex: 'udate',
+            //sortable: false
+        },{
+            text: "更新人",
+            dataIndex: "typer",
+            //sortable: false
+        },{
+            text: "排产人",
+            dataIndex: "scheduler",
+            //sortable: false
+        },
+
+
+        {
+            text: "物料齐套时间",
+            dataIndex : 'materialsCompleteness',
+            //sortable: false
+        },{
+            text: "入库进度",
+            dataIndex: "stockInDate",
+            //sortable: false
+        },{
+            text: "证明书完成时间",
+            dataIndex: "certificateDate",
+            //sortable: false
+        }]
+    });
+    var reportPanel = Ext.create('Ext.panel.Panel', {
+        contentEl: 'reportPanel',
+        region: 'north'
+    })
+    var viewport = Ext.create('Ext.Viewport', {
+        id: 'gridPage',
+        layout: 'border',
+        items: [reportPanel, gridPanel]
+    });
+
+})
+function doDispatch() {
+    var code = $("#code").val();
+    if (code == "") {
+        Ext.Msg.alert('系统提示', '请输入派工单上的条形码');
+        return;
+    }
+    $.post('/produce/getOrderIdByCode.do', {'code': code}, function(response) {
+        if (response.success) {
+            var orderId = response.orderId;
+            window.location.href = "edit.html?oid=" + orderId;
+        } else {
+            Ext.Msg.alert('系统提示', response.msg);
+        }
+    });
+}
+</script>
+</body>
+</html>

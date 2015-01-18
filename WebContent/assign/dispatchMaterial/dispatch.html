@@ -1,0 +1,43 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <link rel="stylesheet" type="text/css" href="../../resources/css/index.css" />
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+	<div style="margin:50px;">
+		<input id="code" style="width:200px"/>
+		<button onclick="doDispatch()">确定领料</button>
+        <br />
+        <span style="color:red;font-size:12px;">如果无法扫出条形码，请手动输入条形码下面的字符串</span>
+	</div>
+<script type="text/javascript">
+function doDispatch() {
+    var code = $("#code").val();
+    if (code == "") {
+        Ext.Msg.alert('系统提示', '请输入派工单上的条形码');
+        return;
+    }
+    $.ajax({
+        type: "POST",
+        url: "doDispatch.do",
+        data: "code=" + code,
+        success: function(response) {
+            if (response.success) {
+                Ext.Msg.alert('系统提示', '领料成功！', function(buttonId, text, opt) {
+                    if (buttonId == 'ok'){
+                        window.location.href = 'dispatch.html';
+                    }
+                });
+            } else {
+                Ext.Msg.alert('系统提示', response.msg);
+            }
+        }
+    });
+}
+</script>
+</body>
+</html>

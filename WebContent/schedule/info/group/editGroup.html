@@ -1,0 +1,119 @@
+<html>
+<head>
+<title>编辑产品族信息</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../../resources/js/common.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="button">
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+	</div>
+<script type="text/javascript">
+var groupPanel;
+Ext.onReady(function() {
+	groupPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		bodyPadding: '5 0 0 0',
+		items : [{
+			xtype: 'textfield',
+			labelAlign: 'right',
+			fieldLabel: '产品族id',
+			name: 'id',
+			hidden: true
+		},{
+			xtype: 'textfield',
+			labelAlign: "right",
+            fieldLabel: '产品族编号',
+            name: 'groupId',
+            allowBlank: false ,
+            msgTarget: 'under',
+            blankText: '该字段不能为空',
+		},{
+			xtype: 'textfield',
+			labelAlign: "right",
+            fieldLabel: '产品族名称',
+            name: 'groupName',
+            allowBlank: false ,
+            msgTarget: 'under',
+            blankText: '该字段不能为空',
+		},{
+			xtype: 'textfield',
+			labelAlign: "right",
+            fieldLabel: '产品代号',
+            name: 'productCode',
+            allowBlank: false ,
+            msgTarget: 'under',
+            blankText: '该字段不能为空',
+		},{
+			xtype: 'displayfield',
+			labelAlign: "right",
+            fieldLabel: '',
+            value: '多个产品代号之间可以用"，"或者"、"隔开',
+		},]
+	});
+
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var groupId = getParams('groupId');
+	if (groupId != null) {
+		Ext.Ajax.request({
+		    url: 'listGroup.do',
+		    params: {'id': groupId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var data = result.data[0];
+		    			groupPanel.getForm().findField('id').setValue(data.id);
+		    			groupPanel.getForm().findField('groupId').setValue(data.groupId);
+		    			groupPanel.getForm().findField('groupName').setValue(data.groupName);
+		    			if(data.uid != 0){
+		    				groupPanel.getForm().findField('productCode').setValue(data.productCode);
+		    			}
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+
+//保存配套
+function save() {
+	var params = {};
+	var id = groupPanel.getForm().findField('id').getValue();
+	var groupId = groupPanel.getForm().findField('groupId').getValue();
+	var groupName = groupPanel.getForm().findField('groupName').getValue();
+	var productCode = groupPanel.getForm().findField('productCode').getValue();
+	if(id == ""){
+		params['id'] = 0;
+	}else{
+		params['id'] = id;
+	}
+	params['groupId'] = groupId;
+	params['groupName'] = groupName;
+	params['productCode'] = productCode;
+	$.post('saveOrUpdate.do', params, function(response) {
+		if (response.success) {
+    		Ext.Msg.alert('系统提示', response.msg, function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', response.msg);
+    	}
+	});
+}
+</script>
+</body>
+</html>

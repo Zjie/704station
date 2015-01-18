@@ -1,0 +1,162 @@
+<html>
+<head>
+<title>编辑员工</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../resources/js/common.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="bom" style="padding: 10 0 10 0"></div>
+	<div id="button">
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+		<button type="button" onclick="unbind()">解绑账号</button>
+	</div>
+	<div id="addMaterial" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+<script type="text/javascript">
+var orderPanel;
+Ext.onReady(function() {
+	var workerId = getParams('workerId');
+	if (workerId == null) workerId = -1;
+	var userStore = Ext.data.Store({
+		autoLoad: true,
+		model: 'user',
+		id: 'userStore',
+		proxy: {  
+	        type: 'ajax',
+	        url : 'listUser.do?workerId=' + workerId,
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	})
+	workerPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		bodyPadding: '5 0 0 0',
+		items : [{
+			xtype: 'textfield',
+			labelAlign: 'right',
+			fieldLabel: '员工ID',
+			name: 'id',
+			hidden: true
+		},{
+			xtype: 'textfield',
+			labelAlign: "right",
+            fieldLabel: '员工名称',
+            name: 'realName',
+		},{
+			xtype: 'combo',
+			labelAlign: "right",
+			fieldLabel: '生产单元',
+			name: 'unit',
+			displayField: 'text',
+			valueField: 'value',
+			store: new Ext.data.SimpleStore({
+				fields:['value','text'],
+				data:[['A','A'],['B','B'],['C','C'],['D','D'],['E','E']]
+			}) 
+		},{
+			xtype:'combo',
+			labelAlign: 'right',
+			fieldLabel: '账户名称',
+			name: 'uid',
+			id: 'uid',
+			displayField: 'userName',
+			valueField: 'id',
+			store: userStore
+		}]
+	});
+
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var workerId = getParams('workerId');
+	if (workerId != null) {
+		Ext.Ajax.request({
+		    url: 'getById.do',
+		    params: {'id': workerId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var data = result.data;
+		    			var form = workerPanel.getForm();
+		    			form.findField('id').setValue(data.id);
+		    			form.findField('realName').setValue(data.realName);
+		    			form.findField('unit').setValue(data.unit);
+		    			if(data.uid != 0){
+		    				var store = Ext.getStore('userStore');
+		    				store.add({'id':data.uid,'userName':data.userName});
+		    				var user = Ext.getCmp('uid');
+		    				user.setValue(data.uid);
+		    			}
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+
+//保存配套
+function save() {
+	var params = {};
+	var form = workerPanel.getForm();
+	var id = form.findField('id').getValue();
+	var realName = form.findField('realName').getValue();
+	var unit = form.findField('unit').getValue();
+	var uid = form.findField('uid').getValue();
+	if(id == ""){
+		params['id'] = 0;
+	}else{
+		params['id'] = id;
+	}
+	params['realName'] = realName;
+	params['unit'] = unit;
+	params['uid'] = uid;
+	$.post('saveOrUpdate.do', params, function(response) {
+		var result = eval('('+response+')');
+		if (result.success) {
+    		Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', result.msg);
+    	}
+	});
+}
+function unbind() {
+	var workerId = getParams('workerId');
+	if (workerId == null) Ext.Msg.alert('系统提示', '只有已经绑定账号的工人才能进行接班');
+	var params = {'workerId':workerId};
+	$.post('unbind.do', params, function(response) {
+		var result = eval('('+response+')');
+		if (result.success) {
+    		Ext.Msg.alert('系统提示', '解绑成功', function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', result.msg);
+    	}
+	});
+}
+</script>
+</body>
+</html>

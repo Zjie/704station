@@ -1,0 +1,161 @@
+<html>
+<head>
+	<title>工序编辑</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function() {
+	var info = new Ext.form.FormPanel({
+		id : 'basicInfo',
+		renderTo: Ext.getBody(),
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						id: 'phase',
+						xtype: 'combo',
+						labelAlign: "right",
+			            fieldLabel: '生产阶段',
+			            name: 'phase',
+			            store: phase,
+			            queryMode: 'local',
+					    displayField: 'name',
+					    allowBlank: false ,
+			            msgTarget: 'under',
+			            blankText: '该字段不能为空',
+					    valueField: 'value'
+					},{
+						id: 'groupName',
+						xtype: 'numberfield',
+						labelAlign: "right",
+			            fieldLabel: '工序组',
+			            minValue : 0,
+			            allowBlank: false ,
+			            msgTarget: 'under',
+			            blankText: '该字段不能为空',
+			            name: 'groupName'
+					},{
+						id: 'content',
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工作内容',
+			            allowBlank: false ,
+			            msgTarget: 'under',
+			            blankText: '该字段不能为空',
+			            name: 'content'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+						id: 'measure',
+						xtype: 'numberfield',
+						labelAlign: "right",
+			            fieldLabel: '周期预估',
+			            allowBlank: false ,
+			            msgTarget: 'under',
+			            blankText: '该字段不能为空',
+			            minValue : 0,
+			            name: 'measure'
+					},{
+						id: 'base',
+						xtype: 'numberfield',
+						labelAlign: "right",
+			            fieldLabel: '基数',
+			            allowBlank: false ,
+			            msgTarget: 'under',
+			            blankText: '该字段不能为空',
+			            minValue : 0,
+			            name: 'base'
+					},{
+						id: 'remark',
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '备注',
+			            name: 'remark'
+					}]
+				},
+			]
+		}],
+		buttons : [{
+			text : '保存',
+			formBind: true,
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('processStore');
+				var params = form.getValues();
+				if (params['groupName'] == '') {
+					params['groupName'] = -1;
+				}
+				if (params['measure'] == '') {
+					params['measure'] = -1;
+				}
+				if (params['base'] == '') {
+					params['base'] = -1;
+				}
+				var pid = getParams('pid');
+				if (pid != null) {
+					params['id'] = pid;
+				} else {
+					params['id'] = -1;
+				}
+				$.post('saveOrUpdate.do', params, function(response) {
+					var result = eval('('+response+')');
+					if (result.success) {
+			    		Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+			            	if (buttonId == 'ok'){
+					            window.location.href = "list.html";
+			            	}
+			            });
+			    	} else {
+			    		Ext.Msg.alert('系统提示', result.msg);
+			    	}
+				});
+			}
+		},{
+			text : '取消',
+			handler : function() {
+				window.location.href = "list.html";
+			}
+		}]
+	});
+	initial();
+});
+
+function initial() {
+	var pid = getParams('pid');
+	if (pid != null) {
+		Ext.Ajax.request({
+		    url: 'findById.do',
+		    params: {'pid': pid},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var process = result.data;
+						Ext.getCmp('phase').setValue(process.phase);
+						Ext.getCmp('groupName').setValue(process.groupName);
+						Ext.getCmp('content').setValue(process.content);
+						Ext.getCmp('measure').setValue(process.measure);
+						Ext.getCmp('base').setValue(process.base);
+						Ext.getCmp('remark').setValue(process.remark);
+		    		} else {
+		    			Ext.Msg.alert('系统提示', result.msg);
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+</script>
+</body>
+</html>

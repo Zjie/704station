@@ -1,0 +1,156 @@
+<html>
+<head>
+	<title>已确认的停工列表</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function() {
+	var store = Ext.create('Ext.data.Store', {
+	    model: 'tinggong',
+	    autoLoad: true,
+	    id: 'tinggongStore',
+	    proxy: {
+	        type: 'ajax',
+	        url : 'tinggongReportList.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data'
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '上报的停工列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    //multiSelect: false,
+	    //selModel: {selType: 'checkboxmodel'},
+	    viewConfig: {
+	        id: 'orderViewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        //tpl: "<a href='edit.html?orderId={id}'>编辑</a>&nbsp<a style='color: red;' onclick='deleteOrder({id})'>删除</a>"
+	        tpl: "<a href='#' onclick='commit({id})'>确认停工</a>"
+	    },{
+	        text: "订单id",
+	        hidden: true,
+	        dataIndex: 'orderId',
+	        //sortable: false
+	    },{
+	    	text: "停工原因",
+	    	dataIndex: 'reason',
+	    	sortable:false
+	    },{
+	        text: "停工描述",
+	        dataIndex: 'desc',
+	        //sortable: false
+	    },{
+	        text: "上报停工时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+	    	text: "开始时间",
+	    	dataIndex : 'start',
+	    	//sortable: false
+	    },{
+	        text: "结束时间",
+	        dataIndex: 'end',
+	        //sortable: false
+	    },
+
+	    {
+			text: "排产工序组id",
+			dataIndex: "srId",
+			hidden: true,
+			//sortable: false
+		},{
+			text: "排产工序组名称",
+			hidden: true,
+			dataIndex: "srName",
+			//sortable: false
+		},
+
+		{
+	    	text: "订单编号",
+	    	dataIndex: 'orderNo',
+	    	sortable:false
+	    },{
+	        text: "上报停工者",
+	        dataIndex: 'reporter',
+	        //sortable: false
+	    },{
+	    	text: "确认停工者",
+	    	dataIndex : 'commiter',
+	    	//sortable: false
+	    },{
+	    	text: "确认停工时间",
+	    	dataIndex : 'commitDate',
+	    	//sortable: false
+	    },{
+	        text: "重启停工者",
+	        dataIndex: 'restarter',
+	        //sortable: false
+	    },{
+	    	text: "重启停工时间",
+	    	dataIndex : 'restartDate',
+	    	//sortable: false
+	    }]
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [gridPanel]
+	});
+
+});
+function commit(ptid) {
+	Ext.Msg.show({
+	    title: '系统提示',
+	    msg: '您确定要确认该停工吗？',
+	    buttons: Ext.Msg.OKCANCEL,
+	    fn: function(buttonId, text, opt) {
+	    	if (buttonId == 'ok'){
+				$.ajax({
+			        type: "POST",
+			        url: "commit.do",
+			        data: "ptid=" + ptid,
+			        success: function(resp) {
+			        	if (resp.success) {
+			        		Ext.Msg.alert('系统提示', '确认成功！请点击确认', function(buttonId, text, opt) {
+				            	if (buttonId == 'ok'){
+				            		window.location.href = 'reportList.html';
+				            	}
+				            });
+			        	} else {
+			        		Ext.Msg.alert('系统提示', '确认失败，请重试或者联系管理员');
+			        	}
+			        }
+			    });
+		    }
+	    },
+	    icon: Ext.window.MessageBox.WARNING
+	});
+}
+</script>
+</body>
+</html>

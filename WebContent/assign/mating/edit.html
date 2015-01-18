@@ -1,0 +1,285 @@
+<html>
+<head>
+<title>领料配套编辑</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../resources/js/common.js"></script>
+<script language="javascript" type="text/javascript" src="../../My97DatePicker/WdatePicker.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="bom" style="padding: 10 0 10 0"></div>
+	<div id="button">
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+		<button type="button" onclick="editOrder()">编辑模板</button>
+	</div>
+	<div id="addMaterial" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+<script type="text/javascript">
+var orderPanel;
+Ext.onReady(function() {
+	orderPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		id: 'orderForm',
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '序号',
+			            name: 'no'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '课题编号',
+			            name: 'project'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '主管工艺',
+			            name: 'process'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '使用型号',
+			            name: 'model'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品名称',
+			            name: 'productName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品代号',
+			            name: 'productCode'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品批次及编号',
+			            name: 'productBatchId'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+	                    xtype: 'textfield',
+	                    labelAlign: "right",
+	                    fieldLabel: '配套时间',
+	                    name: 'reportDate',
+	                    id: 'reportDate',
+	                    listeners: {
+	                        render: function(p) {
+	                            p.getEl().on('click', function() {
+	                                WdatePicker({
+	                                    el: 'reportDate-inputEl',
+	                                    dateFmt: 'yyyy-MM-dd'
+	                                });
+
+	                            });
+	                        }
+	                    }
+	                }]
+				}
+			]
+		}]
+	});
+
+	var store = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'material',
+	    id: 'materialsStore',
+	    data: [],
+	    groupField: 'type'
+	});
+	var groupingFeature= Ext.create('Ext.grid.feature.Grouping',{
+		id: 'groupingFeature',
+        groupHeaderTpl: '{name} 共{rows.length}个'
+    });
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'gridPanel',
+	    features: [groupingFeature],
+	    store: store,
+	    renderTo: 'bom',
+	    columns:[{
+	        hidden: true,
+	        text: "物料id",
+	        dataIndex: 'id',
+	        ////sortable: false
+	    },{
+	    	hidden: true,
+	        text: "物料类别",
+	        dataIndex: 'type',
+	        ////sortable: false
+	    },{
+	        text: "名称",
+	        dataIndex: 'name',
+	        ////sortable: false
+	    },{
+	    	text: "型号规格",
+	    	dataIndex : 'specification',
+	    	////sortable: false
+	    },{
+	        text: "质量等级或标准要求",
+	        dataIndex: 'level',
+	        ////sortable: false
+	    },{
+			text: "计量单位",
+			dataIndex: "uom",
+			////sortable: false
+		},{
+	        text: "单机",
+	        dataIndex: 'singleNum',
+	        ////sortable: false
+	    },{
+	    	text: '工艺备份数量',
+	    	dataIndex: 'bkNum',
+	    	////sortable: false
+	    },{
+	    	text: '总需求量',
+	    	dataIndex: 'allNum',
+	    },{
+	    	text: '已配套数量',
+	    	dataIndex: 'totalAssign',
+	    	////sortable: false
+	    },{
+	    	text: '差额',
+	    	dataIndex: 'diffNum'
+	    },{
+	    	text: '配套数量',
+	    	xtype: "templatecolumn",
+	    	width:110,
+	    	tpl: "<input type='text' value='还可配套{diffNum}个' id='assign{id}' style='width:150px; color:#999999' onfocus='initText(this)' onkeyup='check(this,{diffNum})' onblur='setText(this,{diffNum})'></input>"
+	    }]
+	});
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var oid = getParams('oid');
+	if (oid != null) {
+		Ext.Ajax.request({
+		    url: 'getAssignOrder.do',
+		    params: {'id': oid},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.success) {
+		    			var mt = result.order;
+		    			var mtStore = Ext.getStore('materialsStore');
+		    			//将物料加入grid中
+						mtStore.add(mt.orderMaterials);
+						var form = orderPanel.getForm();
+		    			form.findField('no').setValue(mt.no);
+		    			form.findField('process').setValue(mt.process);
+		    			form.findField('model').setValue(mt.model);
+		    			form.findField('project').setValue(mt.project);
+		    			form.findField('productName').setValue(mt.productName);
+		    			form.findField('productCode').setValue(mt.productCode);
+		    			form.findField('productBatchId').setValue(mt.productBatchId);
+		    		} else {
+		    			alert(result.msg);
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+
+//保存配套
+function save() {
+	var params = {};
+	var orderId = getParams('oid');//获取订单id
+	var mtStore = Ext.getStore('materialsStore');
+	var items = mtStore.data.items;
+	var j=-1;
+	var totalSingleNum=0;//该订单所有物料的数量总和
+	var totalAssign=0;//已配套的物料总数与将要配套的物料总数之和
+	for(var i=0; i<items.length; i++){ 
+		var record = items[i].data;
+		totalSingleNum += record.singleNum;
+		totalAssign += record.totalAssign;
+		var temp = Ext.getDom('assign'+record.id).value;
+		var assign;
+		if(temp.indexOf("还")!=-1||temp==""||temp==null){
+			continue;
+		}else{
+			j++;
+			assign = parseInt(temp);
+			totalAssign += assign;//加上将要配套的物料总数
+		}
+		if(assign>record.leftAssign){
+			Ext.Msg.alert("错误","配套数量超过可配套数量！");
+			return;
+		} 
+		params['orderId'] = parseInt(orderId);
+		params['assigns[' + j + '].omid'] = record.id;
+		params['assigns[' + j + '].matingNum'] = assign;
+	}
+	params['totalAssign'] = totalAssign;
+	params['totalSingleNum'] = totalSingleNum;
+	if(j == -1){
+		Ext.Msg.alert("提示","您没有执行任何配套操作！");
+		return;
+	}
+	//加上配套时间
+	var values = Ext.getCmp('orderForm').getValues();
+	params['reportDate'] = values['reportDate'];
+	$.post('toAssign.do', params, function(response) {
+		var result = eval('('+response+')');
+		if (result.success) {
+    		Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', result.msg);
+    	}
+	});
+}
+//点击文本框时，初始化文本值及样式
+function initText(o){
+	if(o.value.indexOf("还")!=-1){
+		o.value="";
+	}
+	o.style.color="black";
+}
+//文本只能输入数字，且不能超过可配套数
+function check(o,num){
+	 o.value=o.value.replace(/[^\d]/g,"");
+	 if(o.value>num){
+	 	o.value="";
+	 }
+}
+//光标离开文本框时
+function setText(o,num){
+	if(o.value==""){
+		o.value="还可配套"+num+"个";
+		o.style.color="#999999";
+	}
+}
+//编辑订单模板
+function editOrder(){
+	var oid = getParams('oid');
+	window.location.href="../../order/list/edit.html?mtId="+oid;
+}
+</script>
+</body>
+</html>

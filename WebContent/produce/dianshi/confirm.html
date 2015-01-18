@@ -1,0 +1,184 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="reportPanel" style="padding: 10 0 10 0"></div>
+	<div id="button">
+		<button type="button" onclick="javascript:window.location.href='list.html'">返回</button>
+	</div>
+	<div id="addMaterial" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+<script type="text/javascript">
+var orderPanel;
+Ext.onReady(function() {
+	orderPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		//id: 'orderPanel',
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '序号',
+			            name: 'no'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '课题编号',
+			            name: 'project'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '主管工艺',
+			            name: 'process'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '使用型号',
+			            name: 'model'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品名称',
+			            name: 'productName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品代号',
+			            name: 'productCode'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品批次及编号',
+			            name: 'productBatchId'
+					}]
+				}
+			]
+		}]
+	});
+	var reportStore = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'produceDianshi',
+	    id: 'produceDianshiStore',
+	    data: [],
+	});
+	var reportGridPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'reportGridPanel',
+	    store: reportStore,
+	    renderTo: 'reportPanel',
+	    columns:[{
+	        hidden: true,
+	        text: "试验报工id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+            text: "操作",
+            xtype: "templatecolumn",
+            tpl :new Ext.XTemplate(
+                '<tpl if="status==1"><a style="color:#C0C0C0">已经确认</tpl>',
+                '<tpl if="status==0"><a style="color:blue" href="#" onclick="confirmPd()" >确认完成</tpl>'
+            )
+        },{
+        	text: '典试内容',
+        	dataIndex: 'content',
+        },{
+	        text: "典试个数",
+	        dataIndex: 'num',
+	        //sortable: false
+	    },{
+	    	text: "上报日期",
+	    	dataIndex : 'udate',
+	    	//sortable: false
+	    },{
+	        text: "确认日期",
+	        dataIndex: 'confirmDate',
+	        //sortable: false
+	    }]
+	});
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var orderId = getParams('oid');
+	if (orderId != null) {
+		Ext.Ajax.request({
+		    url: '/produce/list.do',
+		    params: {'id': orderId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.success) {
+		    			var order = result.data.items[0];
+						var form = orderPanel.getForm();
+						form.findField('no').setValue(order.no);
+						form.findField('process').setValue(order.process);
+						form.findField('model').setValue(order.model);
+						form.findField('project').setValue(order.project);
+						form.findField('productName').setValue(order.productName);
+						form.findField('productCode').setValue(order.productCode);
+						form.findField('productBatchId').setValue(order.productBatchId);
+					} else {
+			    		alert(result.msg);
+			    	}
+		    	}
+		    }
+		});
+		Ext.Ajax.request({
+		    url: 'getReportByWorker.do',
+		    params: {'orderId': orderId},
+		    success: function(response) {
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var produceDianshiStore = Ext.getStore('produceDianshiStore');
+		    			produceDianshiStore.add(result.data);
+					}
+		    	}
+		    }
+		});
+	}
+}
+
+//确认
+function confirmPd() {
+	var gridPanel = Ext.getCmp('reportGridPanel');
+	var store = gridPanel.getStore();
+	var record = gridPanel.getSelectionModel().getSelection();
+	var pdId = record[0].data.id;
+
+	Ext.Ajax.request({
+	    url: 'confirm.do',
+	    params: {'pdId': pdId},
+	    success: function(response) {
+	    	if (response.status = 200) {
+	    		var result = eval('(' + response.responseText + ')');
+	    		if (result.success) {
+	    			alert("确认完成");
+	    			location.reload(true);
+				}
+	    	}
+	    }
+	});
+	
+}
+</script>
+</body>
+</html>

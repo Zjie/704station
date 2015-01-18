@@ -1,0 +1,186 @@
+<html>
+<head>
+	<title>工序列表</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function() {
+	var searchForm = new Ext.form.FormPanel(
+	{
+		region: 'north',
+		id : 'searchForm',
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'combo',
+						labelAlign: "right",
+			            fieldLabel: '生产阶段',
+			            name: 'phase',
+			            store: phase,
+			            queryMode: 'local',
+					    displayField: 'name',
+					    valueField: 'value'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工序组',
+			            name: 'groupName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '工作内容',
+			            name: 'content'
+					}]
+				}
+			]
+		}],
+		buttons : [{
+			text : '查询',
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('processStore');
+				var params = form.getValues();
+				if (params['groupName'] == '') {
+					params['groupName'] = -1;
+				}
+				mtStore.proxy['extraParams'] = params;
+				mtStore.load();
+			}
+		},{
+			text : '新增',
+			handler : function() {
+				window.location.href = "edit.html";
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'process',
+	    autoLoad: true,
+	    id: 'processStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : 'list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '工序列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "工序id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "生产阶段",
+	        dataIndex: 'phase',
+	        //sortable: false
+	    },{
+	    	text: "工序组",
+	    	dataIndex : 'groupName',
+	    	//sortable: false
+	    },{
+	        text: "工作内容",
+	        dataIndex: 'content',
+	        //sortable: false
+	    },{
+	        text: "周期预估",
+	        dataIndex: 'measure',
+	        //sortable: false
+	    },{
+	        text: "备注",
+	        dataIndex: 'remark',
+	        //sortable: false
+	    },{
+	    	text: "基数",
+	    	dataIndex : 'base',
+	    	//sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "updater",
+			//sortable: false
+		},{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: "<a href='edit.html?pid={id}'>编辑</a>&nbsp<a style='color: red;' onclick='deleteProcess({id})'>删除</a>"
+	    }],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [searchForm, gridPanel]
+	});
+});
+function deleteProcess(pid) {
+	Ext.Msg.show({
+	    title: '系统提示',
+	    msg: '您确定要删除该工序？',
+	    buttons: Ext.Msg.OKCANCEL,
+	    fn: function(buttonId, text, opt) {
+	    	if (buttonId == 'ok'){
+				$.ajax({
+			        type: "POST",
+			        url: "delete.do",
+			        data: "pid=" + pid,
+			        success: function(data) {
+			            var result = eval('(' + data + ')');
+			            Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+			            	if (buttonId == 'ok'){
+			            		if (result.state == 0) {
+					            	Ext.getStore("processStore").load();
+					            }
+			            	}
+			            });
+			        }
+			    });
+		    }
+	    },
+	    icon: Ext.window.MessageBox.WARNING
+	});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,132 @@
+<html>
+<head>
+    <title>全部用户</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+    <div id='addUser' style="text-align:right;margin:5 40 0 0">
+	    <input type='button' value='新增用户' onclick="addUser()"></input>
+	</div>
+<script type="text/javascript">
+Ext.onReady(function(){
+    var store = Ext.create('Ext.data.Store', {
+        pageSize: 20,
+        model: 'user',
+        autoLoad: true,
+        id: 'userStore',
+        proxy: {  
+            type: 'ajax', 
+            url : 'list.do',
+            actionMethods: {
+                create: "POST", read: "POST", update: "POST", destroy: "POST"
+            },
+            reader: {
+                //数据格式为json
+                type: 'json',
+                root: 'data.items',
+                //获取数据总数  
+                totalProperty: 'data.totalNum'  
+            }
+		}
+    });
+    var grid = Ext.create('Ext.grid.Panel', {
+        title: '用户列表',
+        region: 'center',
+        disableSelection: false,
+        loadMask: true,
+        store: store,
+        viewConfig: {
+            id: 'orderVidewConfig',
+            trackOver: false,
+            stripeRows: false
+        },
+        columns:[{
+            hidden: true,
+            text: "用户id",
+            dataIndex: 'id',
+            ////sortable: false
+        },{
+            text: "用户名称",
+            dataIndex: 'userName',
+            ////sortable: false
+        },{
+            text: "用户昵称",
+            dataIndex: 'nickName',
+        },{
+            text: "用户角色名称",
+            dataIndex: 'roleName',
+            ////sortable: false
+        },{
+            text: "更新时间",
+            dataIndex: 'udate',
+            ////sortable: false
+        },{
+			text: "更新人",
+			dataIndex: "updater",
+			////sortable: false
+		},{
+            text: "操作",
+            xtype: "templatecolumn",
+            tpl: "<a href='userEdit.do?uid={id}'>编辑</a>&nbsp<a style='color: red;' onclick='deleteUser({id})'>删除</a>"
+        }],
+      	//分页功能  
+        bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+    });
+    var viewport = Ext.create('Ext.Viewport', {
+        id: 'gridPage',
+        layout: 'border',
+        items: [
+                grid, 
+                {
+                	height: 40,
+                    region: 'south',
+                    xtype: 'panel',
+                    contentEl: 'addUser'
+                }
+        ]
+    });
+});
+function deleteUser(uid) {
+	Ext.Msg.show({
+	    title: '系统提示',
+	    msg: '您确定要删除该用户？',
+	    buttons: Ext.Msg.OKCANCEL,
+	    fn: function(buttonId, text, opt) {
+	    	if (buttonId == 'ok'){
+				$.ajax({
+			        type: "POST",
+			        url: "delete.do",
+			        data: "uid=" + uid,
+			        success: function(data) {
+			            var result = eval('(' + data + ')');
+			            Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+			            	if (buttonId == 'ok'){
+			            		if (result.state == 0) {
+					            	Ext.getStore("userStore").load();
+					            }
+			            	}
+			            });
+			        }
+			    });
+		    }
+	    },
+	    icon: Ext.window.MessageBox.WARNING
+	});
+}
+function addUser() {
+	window.location.href = "userEdit.do";
+}
+</script>
+</body>
+</html>

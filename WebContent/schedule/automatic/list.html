@@ -1,0 +1,203 @@
+<html>
+<head>
+	<title>自动排产</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function() {
+	//用户选择订单进行排产排序
+	var form = new Ext.form.FormPanel({
+		region: 'north',
+		id : 'form',
+		bodyStyle:'borderWidth: 0 0 1 0',
+		buttons :[{
+			text: '自动排产',
+			id: 'btn',
+			handler:function(){
+				var records = gridPanel.getSelectionModel().getSelection();
+				var ids = '';
+				for(var i = 0; i < records.length; i++){
+					var id = records[i].get('id');
+					if(i == 0){
+						ids += id;
+					}else{
+						ids = ids + ',' + id;
+					}
+				}
+				if(ids == ''){
+					Ext.Msg.alert('系统提示', '请至少选择一个订单');
+					return;
+				}
+				window.location='selectedList.html?ids='+ids;
+			}
+		}]
+	});
+	
+	var store = Ext.create('Ext.data.Store', {
+	    // pageSize: 20,
+	    model: 'order',
+	    autoLoad: true,
+	    id: 'orderStore',
+	    proxy: {
+	        type: 'ajax',
+	        url : 'list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '待排产区订单',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    multiSelect: true,
+	    selModel: {selType: 'checkboxmodel'},
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "订单编号",
+	        dataIndex: 'no',
+	        //sortable: false
+	    },{
+	    	text: "是否完成配套",
+	    	dataIndex: 'isAssigned',
+	    	sortable:false
+	    },{
+	        text: "课题编号",
+	        dataIndex: 'project',
+	        //sortable: false
+	    },{
+	    	text: "主管工艺",
+	    	dataIndex : 'process',
+	    	//sortable: false
+	    },{
+	        text: "使用型号",
+	        dataIndex: 'model',
+	        //sortable: false
+	    },{
+			text: "产品名称",
+			dataIndex: "productName",
+			//sortable: false
+		},{
+			text: "产品代号",
+			dataIndex: "productCode",
+			//sortable: false
+		},
+
+
+		{
+			text: '科二投产数量',
+			dataIndex: "ke2ProduceNum"
+		},{
+			text: '科二典试数量',
+			dataIndex: "ke2DianshiNum"
+		},
+
+
+		{
+	    	text: "计划调整情况",
+	    	dataIndex : 'planToAdjust',
+	    	//sortable: false
+	    },{
+	        text: "车间计划数量",
+	        dataIndex: 'produceNum',
+	        //sortable: false
+	    },{
+			text: "交付数量",
+			dataIndex: "deliveryNum",
+			//sortable: false
+		},{
+			text: "典试计划数量",
+			dataIndex: "testNum",
+			//sortable: false
+		},
+
+
+		{
+			text: "产品批次及编号",
+			dataIndex: "productBatchId",
+			//sortable: false
+		},{
+			text: "备注",
+			dataIndex: "remark",
+			//sortable: false
+		},
+
+
+		{
+	        text: "计划上线日期",
+	        dataIndex: 'onlineDate',
+	        //sortable: false
+	    },{
+	    	text: "计划完成日期",
+	    	dataIndex : 'finishDate',
+	    	//sortable: false
+	    },{
+	        text: "更新时间",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    },{
+			text: "更新人",
+			dataIndex: "typer",
+			//sortable: false
+		},{
+			text: "排产人",
+			dataIndex: "scheduler",
+			//sortable: false
+		},{
+	    	text: "物料齐套时间",
+	    	dataIndex : 'materialsCompleteness',
+	    	//sortable: false
+	    },{
+			text: "入库进度",
+			dataIndex: "stockInDate",
+			//sortable: false
+		},{
+			text: "证明书完成时间",
+			dataIndex: "certificateDate",
+			//sortable: false
+		}],
+	  	//分页功能  
+	 //    bbar: Ext.create('Ext.PagingToolbar', {   
+		// 	store: store,   
+		// 	displayInfo: true,   
+		// 	displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+		// 	emptyMsg: "没有数据",
+		// 	beforePageText : "第",
+		// 	afterPageText : "页 共 {0} 页"
+		// })
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [form, gridPanel]
+	});
+
+});
+
+</script>
+</body>
+</html>

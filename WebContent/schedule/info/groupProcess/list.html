@@ -1,0 +1,131 @@
+<html>
+<head>
+	<title>工序组管理</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+Ext.onReady(function() {
+	//用户选择订单进行排产排序
+	var form = new Ext.form.FormPanel({
+		region: 'north',
+		id : 'form',
+		bodyStyle:'borderWidth: 0 0 1 0',
+		buttons :[{
+			text: '新增工序组',
+			id: 'btn',
+			handler:function(){
+				window.location='edit.html';
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    //pageSize: 20,
+	    model: 'processGroup',
+	    autoLoad: true,
+	    id: 'processGroupStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : 'list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data',
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '工序组列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'groupViewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: "<a href='edit.html?groupProcessId={id}'>编辑</a>&nbsp<a style='color: red;' onclick='deleteProcess({id})'>删除</a>"
+	    },{
+	        text: "产品族编号",
+	        dataIndex: 'groupId',
+	        //sortable: false
+	    },{
+	    	text: "产品族名称",
+	    	dataIndex: 'groupName',
+	    	sortable:false
+	    },{
+			text: "生产单元",
+			dataIndex: "unit",
+			//sortable: false,
+		},{
+			text: "工序组序号",
+			dataIndex: "processGroup",
+			//sortable: false,
+		},{
+			text: "类型",
+			dataIndex: "type",
+			//sortable: false,
+		},{
+			text: "后序工序组序号",
+			dataIndex: "afterProcessGroup",
+			//sortable: false,
+		}],
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [form, gridPanel]
+	});
+
+});
+
+function deleteProcess(groupId) {
+	Ext.Msg.show({
+	    title: '系统提示',
+	    msg: '您确定要删除该产品族？',
+	    buttons: Ext.Msg.OKCANCEL,
+	    fn: function(buttonId, text, opt) {
+	    	if (buttonId == 'ok'){
+				$.ajax({
+			        type: "POST",
+			        url: "delete.do",
+			        data: "id=" + groupId,
+			        success: function(data) {
+			            if (data.success) {
+				    		Ext.Msg.alert('系统提示', '删除成功', function(buttonId, text, opt) {
+				            	if (buttonId == 'ok'){
+						            Ext.getStore("processGroupStore").load();
+				            	}
+				            });
+				    	} else {
+				    		Ext.Msg.alert('系统提示', data.msg);
+				    	}
+			        }
+			    });
+		    }
+	    },
+	    icon: Ext.window.MessageBox.WARNING
+	});
+}
+</script>
+</body>
+</html>

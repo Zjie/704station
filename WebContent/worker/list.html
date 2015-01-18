@@ -1,0 +1,140 @@
+<html>
+<head>
+	<title>员工管理</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+Ext.onReady(function() {
+	//用户选择订单进行排产排序
+	var form = new Ext.form.FormPanel({
+		region: 'north',
+		id : 'form',
+		bodyStyle:'borderWidth: 0 0 1 0',
+		buttons :[{
+			text: '新增员工',
+			id: 'btn',
+			handler:function(){
+				window.location='edit.html';
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'worker',
+	    autoLoad: true,
+	    id: 'workerStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : 'list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '员工列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'workerVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "操作",
+	        xtype: "templatecolumn",
+	        tpl: new Ext.XTemplate(
+	        	'<tpl if="isFreezed==\'是\'">已被冻结</tpl>',
+	        	'<tpl if="isFreezed==\'否\'"><a href="edit.html?workerId={id}">编辑</a>&nbsp<a style="color: red;" onclick="freezeWorker({id})">冻结</a></tpl>'),
+	    },{
+	        text: "员工名称",
+	        dataIndex: 'realName',
+	        //sortable: false
+	    },{
+	    	text: "生产单元",
+	    	dataIndex: 'unit',
+	    	sortable:false
+	    },{
+			text: "账户ID",
+			dataIndex: "uid",
+			hidden:true,
+			//sortable: false
+		},{
+			text: "账户名称",
+			dataIndex: "userName",
+			//sortable: false
+		},{
+			text: '是否冻结',
+			dataIndex: 'isFreezed',
+		}],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [form, gridPanel]
+	});
+
+});
+
+//删除员工
+function freezeWorker(workerId) {
+	Ext.Msg.show({
+	    title: '系统提示',
+	    msg: '您确定要冻结该员工？冻结之后，该员工将无法再进行排产，也无法对其进行操作。在冻结之前，请先将其绑定的账号进行解绑，否则其关联的账号将无法被删除。',
+	    buttons: Ext.Msg.OKCANCEL,
+	    fn: function(buttonId, text, opt) {
+	    	if (buttonId == 'ok'){
+				$.ajax({
+			        type: "POST",
+			        url: "freeze.do",
+			        data: "workerId=" + workerId,
+			        success: function(data) {
+			            var result = eval('(' + data + ')');
+			            Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+			            	if (buttonId == 'ok'){
+			            		if (result.state == 0) {
+					            	Ext.getStore("workerStore").load();
+					            }
+			            	}
+			            });
+			        }
+			    });
+		    }
+	    },
+	    icon: Ext.window.MessageBox.WARNING
+	});
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,160 @@
+<html>
+<head>
+    <title>员工绩效考核</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../resources/js/common.js"></script>
+    <script type="text/javascript" src="../resources/js/jquery-2.0.3.js"></script>
+    <script language="javascript" type="text/javascript" src="../My97DatePicker/WdatePicker.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function(){
+    var searchForm = new Ext.form.FormPanel(
+    {
+        id : 'searchForm',
+        border: 0,
+        region: 'north',
+        /**
+        items : [{
+            layout: 'form',
+            items: [{
+                layout: 'column',
+                border: 0,
+                items: [{
+                    xtype: 'textfield',
+                    labelAlign: "right",
+                    fieldLabel: '开始时间',
+                    allowBlank: false ,
+                    msgTarget: 'under',
+                    blankText: '该字段不能为空',
+                    name: 'begin',
+                    id: 'begin',
+                    listeners: {
+                        render: function(p) {
+                            p.getEl().on('click', function() {
+                                WdatePicker({
+                                    el: 'begin-inputEl',
+                                    dateFmt: 'yyyy-MM-dd'
+                                });
+
+                            });
+                        }
+                    }
+                },{
+                    xtype: 'textfield',
+                    labelAlign: "right",
+                    fieldLabel: '结束时间',
+                    allowBlank: false ,
+                    msgTarget: 'under',
+                    blankText: '该字段不能为空',
+                    name: 'end',
+                    id: 'end',
+                    listeners: {
+                        render: function(p) {
+                            p.getEl().on('click', function() {
+                                WdatePicker({
+                                    el: 'end-inputEl',
+                                    dateFmt: 'yyyy-MM-dd'
+                                });
+
+                            });
+                        }
+                    }
+                }]
+            }]
+        }],
+        **/
+        buttons : [{
+            text : '查询',
+            handler : function() {
+                var records = gridPanel.getSelectionModel().getSelection();
+                var id = records[0].get('id');
+                if(id == ''){
+                    Ext.Msg.alert('系统提示', '请至少选择一位工人');
+                    return;
+                }
+                window.location.href = '/kpi/workerReportList.html?workerId=' + id;
+            }
+        }]
+    });
+    var store = Ext.create('Ext.data.Store', {
+        pageSize: 20,
+        model: 'worker',
+        autoLoad: true,
+        id: 'workerStore',
+        proxy: {  
+            type: 'ajax',
+            url : '/worker/list.do',
+            actionMethods: {
+                create: "POST", read: "POST", update: "POST", destroy: "POST"
+            },
+            reader: {
+                //数据格式为json
+                type: 'json',
+                root: 'data.items',
+                //获取数据总数  
+                totalProperty: 'data.totalNum'  
+            }
+        }
+    });
+    var gridPanel = Ext.create('Ext.grid.Panel', {
+        title: '员工列表',
+        region: 'center',
+        //selModel: {model:'SINGLE'},
+        selType: 'rowmodel',
+        disableSelection: false,
+        loadMask: true,
+        store: store,
+        viewConfig: {
+            id: 'workerVidewConfig',
+            trackOver: false,
+            stripeRows: false
+        },
+        columns:[{
+            hidden: true,
+            text: "id",
+            dataIndex: 'id',
+            ////sortable: false
+        },{
+            text: "员工名称",
+            dataIndex: 'realName',
+            ////sortable: false
+        },{
+            text: "生产单元",
+            dataIndex: 'unit',
+            sortable:false
+        },{
+            text: "账户ID",
+            dataIndex: "uid",
+            hidden:true,
+            ////sortable: false
+        },{
+            text: "账户名称",
+            dataIndex: "userName",
+            ////sortable: false
+        },{
+            text: '是否冻结',
+            dataIndex: 'isFreezed',
+        }],
+        //分页功能  
+        bbar: Ext.create('Ext.PagingToolbar', {   
+            store: store,   
+            displayInfo: true,   
+            displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+            emptyMsg: "没有数据",
+            beforePageText : "第",
+            afterPageText : "页 共 {0} 页"
+        })
+    });
+
+    var viewport = Ext.create('Ext.Viewport', {
+        id: 'gridPage',
+        layout: 'border',
+        items: [searchForm,gridPanel]
+    });
+})
+</script>
+</body>
+</html>

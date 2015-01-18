@@ -1,0 +1,417 @@
+<html>
+<head>
+<title>编辑产品族信息</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../../resources/js/common.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="processWorkers" style="padding: 10 0 10 0"></div>
+	<div id="button">
+		<button type="button" onclick="showAddWorker()">添加工人</button>
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+	</div>
+	<div id="addWorker" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+<script type="text/javascript">
+pwgId = -1;
+Ext.onReady(function() {
+	var productGroupStore = Ext.create('Ext.data.Store', {
+	    model: 'productGroup',
+	    autoLoad: true,
+	    id: 'productGroupStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : '../group/listGroup.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data',
+	        }
+		}
+	});
+	//预加载
+	productGroupStore.load();
+	var processPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		layout: 'form',
+		id: 'processPanel',
+		width: 400,
+		items: [
+			{
+		        xtype: 'hiddenfield',
+		        name: 'id',
+		        value: -1,
+		    },{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '产品族编号',
+		            //emptyText:'请选择一个产品族名称', 
+		            readOnly:true,
+		            name: 'groupId',
+		            id: 'groupId',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+				}]
+			},Ext.create('Ext.form.ComboBox', {
+			    fieldLabel: '产品族名称',
+			    labelAlign: "right",
+			    store: productGroupStore,
+			    //triggerAction:'all',
+			    forceSelection:true,
+			    //width: 100,
+			    emptyText:'请选择一个产品族', 
+			    //queryMode: 'local',
+			    displayField: 'groupName',
+			    valueField: 'groupId',
+			    name: 'groupName',
+			    id: 'groupName',
+			    allowBlank: false ,
+	            msgTarget: 'under',
+	            blankText: '该字段不能为空',
+			    listeners: {
+			    	change: {
+			    		fn: function(cb, newValue, oldValue){
+			    			if (newValue == null) return;
+			    			Ext.getCmp('groupId').setValue(newValue);
+			    		}
+			    	}
+			    }
+			}),{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '生产单元',
+					name: 'unit',
+					id: 'unit',
+					allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'numberfield',
+					labelAlign: 'right',
+					fieldLabel: '工序组序号',
+					name: 'processGroup',
+					id: 'processGroup',
+					allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [
+					Ext.create('Ext.form.ComboBox', {
+				    fieldLabel: '工序组类型',
+				    labelAlign: "right",
+				    store: processTypeStore,
+				    queryMode: 'local',
+				    displayField: 'name',
+				    valueField: 'value',
+				    name: 'typeValue',
+				    id: 'typeValue',
+				    allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+				})]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'numberfield',
+					labelAlign: 'right',
+					fieldLabel: '后序工序组序号',
+					name: 'afterProcessGroup',
+					id: 'afterProcessGroup',
+				}]
+			},
+		]
+	});
+	var workerStore = Ext.create('Ext.data.Store', {
+	    model: 'worker',
+	    autoLoad: true,
+	    id: 'workerStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : '/worker/listAll.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data',
+	        }
+		}
+	});
+
+	var addWorkerPanel = new Ext.form.FormPanel({
+		border: 0,
+		layout: 'form',
+		id: 'addWorkerPanel',
+		width: 800,
+		items: [
+			{
+				layout: 'column',
+				border: 0,
+				items: [
+				Ext.create('Ext.form.ComboBox', {
+				    fieldLabel: '工人',
+				    labelAlign: "right",
+				    store: workerStore,
+				    triggerAction:'all',
+				    forceSelection:true,
+				    emptyText:'请选一位工人', 
+				    //queryMode: 'local',
+				    displayField: 'realName',
+				    valueField: 'id',
+				    name: 'id',
+				    listeners: {
+				    	change: {
+				    		fn: function(cb, newValue, oldValue){
+				    			if (newValue == null) return;
+				    			var idx = cb.getStore().findBy(function(record,id){return record.get('id') == newValue});
+				    			var record = cb.getStore().getAt(idx);
+				    			var realName = record.get('realName');
+				    			Ext.getCmp('workerName').setValue(realName);
+				    			Ext.getCmp('workerId').setValue(newValue);
+				    		}
+				    	}
+				    }
+				}),{
+					xtype: 'hiddenfield',
+		            name: 'workerName',
+		            id: 'workerName',
+				},{
+					xtype: 'hiddenfield',
+		            name: 'workerId',
+		            id: 'workerId',
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '基数',
+		            labelWidth: 120,
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'base'
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+					labelWidth: 120,
+		            fieldLabel: '耗时',
+		            name: 'timeToConsume',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+				}]
+			}],
+		buttons : [{
+			text : '取消',
+			handler : function() {
+				var form = this.up('form').getForm();
+				form.reset();
+				hideAddWorker();
+			}
+		},{
+			text : '添加',
+			formBind : true,
+			handler : function(button, e) {
+				var form = this.up('form').getForm();
+				var params = form.getValues();
+				var pStore = Ext.getStore('processWorkerStore');
+				params['id'] = pwgId;
+				params['workerId'] = parseInt(params['workerId']);
+				//查找不能重复添加
+				if (pStore.findExact('workerId', params['workerId']) < 0) {
+					params['base'] = parseInt(params['base']);
+					params['gupId'] = 0;
+					params['timeToConsume'] = parseInt(params['timeToConsume']);
+					pStore.add(params);
+					pwgId -= 1;
+				} else {
+					Ext.Msg.alert('系统提示', "不能重复绑定工人！");
+				}
+				form.reset();
+				hideAddWorker();
+			}
+		}]
+	});
+	var wrapperPanel = new Ext.panel.Panel({
+		id: 'wrapperPanel',
+		width: 800,
+		renderTo: 'addWorker',
+		padding: '70 0 0 0',
+		margin: '0 0 0 100',
+		items: [addWorkerPanel]
+	});
+	hideAddWorker();
+	//workerStore.load();
+	var store = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'processWorker',
+	    id: 'processWorkerStore',
+	    data: [],
+	});
+	var processWorkerPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'processWorkerPanel',
+	    store: store,
+	    renderTo: 'processWorkers',
+	    columns:[{
+	        hidden: true,
+	        text: "pgwId",
+	        dataIndex: 'id',
+	        ////sortable: false
+	    },{
+	    	hidden: false,
+	        text: "工人编号",
+	        dataIndex: 'workerId',
+	        ////sortable: false
+	    },{
+	        text: "工人名称",
+	        dataIndex: 'workerName',
+	        ////sortable: false
+	    },{
+	    	text: "基数",
+	    	dataIndex : 'base',
+	    	////sortable: false
+	    },{
+	        text: "耗时",
+	        dataIndex: 'timeToConsume',
+	        ////sortable: false
+	    },{
+	    	text: '操作',
+	    	xtype: "templatecolumn",
+	    	tpl: "<a style='color: red;' onclick='deletePGW()'>删除</a>"
+	    }]
+	});
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var groupProcessId = getParams('groupProcessId');
+	if (groupProcessId != null) {
+		Ext.Ajax.request({
+		    url: 'list.do',
+		    params: {'id': groupProcessId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var data = result.data[0];
+		    			var form = Ext.getCmp('processPanel').getForm();
+		    			form.findField('id').setValue(data.id);
+		    			form.findField('groupId').setValue(data.groupId);
+		    			form.findField('groupName').setValue(data.groupId);
+		    			form.findField('unit').setValue(data.unit);
+		    			form.findField('processGroup').setValue(data.processGroup);
+		    			//form.findField('type').setValue(data.type);
+		    			form.findField('typeValue').setValue(data.typeValue);
+		    			form.findField('afterProcessGroup').setValue(data.afterProcessGroup);
+		    			var processWorkerStore = Ext.getStore('processWorkerStore');
+		    			var workers = new Array();
+		    			for (var ele in data.pgws) {
+		    				var w = data.pgws[ele];
+		    				if (w.workerId <= 0) continue;
+		    				workers.push(w);
+		    			}
+		    			//将物料加入grid中
+						processWorkerStore.add(workers);
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+
+//保存配套
+function save() {
+	var params = {};
+	//基础信息
+	var processPanel = Ext.getCmp('processPanel');
+	var form = processPanel.getForm();
+
+	var id = form.findField('id').getValue();
+	var groupId = form.findField('groupId').getValue();
+	var groupName = form.findField('groupName').getValue();
+	var unit = form.findField('unit').getValue();
+	var processGroup = form.findField('processGroup').getValue();
+	var typeValue = form.findField('typeValue').getValue();
+	var afterProcessGroup = form.findField('afterProcessGroup').getValue();
+	if(id == ""){
+		params['id'] = 0;
+	}else{
+		params['id'] = id;
+	}
+	params['groupId'] = groupId;
+	params['groupName'] = groupName;
+	params['unit'] = unit;
+	params['processGroup'] = processGroup;
+	params['typeValue'] = typeValue;
+	params['afterProcessGroup'] = afterProcessGroup;
+	//取出每个工人的信息
+	var store = Ext.getStore('processWorkerStore');
+	var items = store.data.items;
+	for(var i=0; i<items.length; i++){ 
+		var record = items[i].data;
+		params['pgws[' + i + '].id'] = record.id;
+		params['pgws[' + i + '].workerId'] = record.workerId;
+		params['pgws[' + i + '].timeToConsume'] = record.timeToConsume;
+		params['pgws[' + i + '].base'] = record.base;
+	}
+
+	$.post('saveOrUpdate.do', params, function(response) {
+		if (response.success) {
+    		Ext.Msg.alert('系统提示', '保存成功', function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', response.msg);
+    	}
+	});
+}
+
+function deletePGW() {
+	var processWorkerPanel = Ext.getCmp('processWorkerPanel');
+	var store = processWorkerPanel.getStore();
+	var record = processWorkerPanel.getSelectionModel().getSelection();
+	store.remove(record);
+}
+
+//显示物料添加面板
+function showAddWorker() {
+	Ext.getCmp("wrapperPanel").show();
+	Ext.get("addWorker").setHeight(500);
+}
+//隐藏物料添加面板
+function hideAddWorker() {
+	Ext.get("addWorker").setHeight(0);
+	Ext.getCmp("wrapperPanel").hide();
+}
+</script>
+</body>
+</html>

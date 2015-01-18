@@ -1,0 +1,190 @@
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+    <script language="javascript" type="text/javascript" src="../../My97DatePicker/WdatePicker.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="bom" style="padding: 10 0 10 0"></div>
+	<div>
+		<input type="checkbox" name="content" value="单板温循" />单板温循<br />
+		<input type="checkbox" name="content" value="整机筛选温循" />整机筛选温循<br />
+		<input type="checkbox" name="content" value="筛选振动" />筛选振动<br />
+		<input type="checkbox" name="content" value="电源开关冲击试验" />电源开关冲击试验<br />
+		<input type="checkbox" name="content" value="老炼实验" />老炼实验<br />
+		<input type="checkbox" name="content" value="温循" />温循<br />
+		<input type="checkbox" name="content" value="振动" />振动<br />
+		<input type="checkbox" name="content" value="高温" />高温<br />
+		<input type="checkbox" name="content" value="低温" />低温<br />
+		<input type="checkbox" name="content" value="常态" />常态<br />
+		自定义试验内容：
+		<input type="radio" width="200" name="custom" value="1" />
+		<input type="text" id="cum_content" /><br />
+		上报个数：
+		<input type="text" id="num" />(还可以上报<span id="canTestNum"></span>个)
+	</div>
+	<div id="button">
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+	</div>
+	<div id="addMaterial" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+<script type="text/javascript">
+var orderPanel;
+Ext.onReady(function() {
+	orderPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		id: 'orderForm',
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '序号',
+			            name: 'no'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '课题编号',
+			            name: 'project'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '主管工艺',
+			            name: 'process'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '使用型号',
+			            name: 'model'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品名称',
+			            name: 'productName'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品代号',
+			            name: 'productCode'
+					},{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '产品批次及编号',
+			            name: 'productBatchId'
+					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+	                    xtype: 'textfield',
+	                    labelAlign: "right",
+	                    fieldLabel: '配套时间',
+	                    name: 'reportDate',
+	                    id: 'reportDate',
+	                    listeners: {
+	                        render: function(p) {
+	                            p.getEl().on('click', function() {
+	                                WdatePicker({
+	                                    el: 'reportDate-inputEl',
+	                                    dateFmt: 'yyyy-MM-dd'
+	                                });
+
+	                            });
+	                        }
+	                    }
+	                }]
+				}
+			]
+		}]
+	});
+
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var orderId = getParams('oid');
+	if (orderId != null) {
+		Ext.Ajax.request({
+		    url: '/produce/list.do',
+		    params: {'id': orderId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.success) {
+		    			var order = result.data.items[0];
+						var form = orderPanel.getForm();
+						form.findField('no').setValue(order.no);
+						form.findField('process').setValue(order.process);
+						form.findField('model').setValue(order.model);
+						form.findField('project').setValue(order.project);
+						form.findField('productName').setValue(order.productName);
+						form.findField('productCode').setValue(order.productCode);
+						form.findField('productBatchId').setValue(order.productBatchId);
+
+						$("#canTestNum").text(order.canReportTestNum);
+					} else {
+						alert(result.msg);
+					}
+		    	}
+		    }
+		});
+	}
+}
+
+//保存报工
+function save() {
+	var params = {};
+	params['orderId'] = getParams('oid');
+	//params['content'] = $('input[name="content"]:checked').val();
+	if ($('input[name="custom"]:checked').size() != 0) {
+		params['content'] = $("#cum_content").val();
+	} else if ($('input[name="content"]:checked').size() != 0) {
+		var content = '';
+		$('input[name="content"]:checked').each(function(){//遍历每一个名字为interest的复选框，其中选中的执行函数    
+            content = content + $(this).val() + ' ';    
+        });
+        params['content'] = content;
+	} else {
+		alert("请选择实验内容或者自定义实验内容");
+		return;
+	}
+	if (params['content'] == '' || params['content'] == null) {
+		alert("实验内容不能为空");
+		return;
+	}
+	params['num'] = $("#num").val();
+	if (isNaN(params['num']) || params['num'] == null || params['num'] == '') {
+		alert("上报个数必须是数字");
+		return;
+	}
+	var canReportTestNum = $("#canTestNum").text();
+	if (parseInt(canReportTestNum) < parseInt(params['num'])) {
+		alert("上报的个数不能超过" + canReportTestNum + "个");
+		return;
+	}
+	var values = Ext.getCmp('orderForm').getValues();
+	params['reportDate'] = values['reportDate'];
+	$.post('report.do', params, function(response) {
+		Ext.Msg.alert('系统提示', response.msg, function(buttonId, text, opt) {
+        	window.location.href = "list.html";
+        });
+	});
+	
+}
+</script>
+</body>
+</html>

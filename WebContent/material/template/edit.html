@@ -1,0 +1,329 @@
+<html>
+<head>
+<title>物料模板编辑</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+<link rel="stylesheet" type="text/css"
+	href="../../extjs/resources/css/ext-all.css" />
+<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body style="padding:10px">
+	<div id="basicInfo"></div>
+	<div id="bom" style="padding: 10 0 10 0"></div>
+	<div id="button">
+		<button type="button" onclick="showMaterial()">添加物料</button>
+		<button type="button" onclick="save()">保存</button>
+		<button type="button" onclick="history.back()">取消</button>
+	</div>
+	<div id="addMaterial" style="width: 100%; position: absolute; top: 0px; z-index: 2;"></div>
+<script type="text/javascript">
+var keys = ['敏感元件','零件','物资','印制板','线缆','辅料','标准件','CZ3电缆','包装箱'];
+var values = {};
+for (var i = 0; i < keys.length; i++) {
+	values[keys[i]] = i;
+}
+var materialIdx = -1;
+Ext.onReady(function() {
+	var mtPanel = new Ext.form.FormPanel({
+		renderTo: 'basicInfo',
+		border: 1,
+		layout: 'form',
+		id: 'mtPanel',
+		width: 400,
+		items: [
+			{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '模板名称',
+		            name: 'mtName',
+		            id: 'mtName',
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '族名称',
+					name: 'groupName',
+					id: 'groupName'
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '产品代号',
+					name: 'productCode',
+					id: 'productCode'
+				}]
+			}
+		]
+	});
+	var data = new Array();
+	for (var i = 0; i < keys.length; i++) {
+		data[i] = {'type':i,'name':keys[i]};
+	}
+	var materialPanel = new Ext.form.FormPanel({
+		border: 0,
+		layout: 'form',
+		id: 'addMaterialPanel',
+		width: 800,
+		items: [
+			{
+				layout: 'column',
+				border: 0,
+				items: [
+				Ext.create('Ext.form.ComboBox', {
+				    fieldLabel: '物料类别',
+				    labelAlign: "right",
+				    store: {
+				    	fields: ['type', 'name'],
+					    data : data
+				    },
+				    queryMode: 'local',
+				    displayField: 'name',
+				    valueField: 'name',
+				    name: 'type'
+				}),{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '名称',
+		            labelWidth: 120,
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'name'
+				}]
+			},{
+				border: 0,
+				layout: 'column',
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '型号规格',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'specification'
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+					labelWidth: 120,
+		            fieldLabel: '质量等级或标准要求',
+		            name: 'level'
+				}]
+			},{
+				border: 0,
+				layout: 'column',
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '计量单位',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            name: 'uom'
+				},{
+					xtype: 'numberfield',
+					labelAlign: "right",
+		            fieldLabel: '单机',
+		            allowBlank: false ,
+		            msgTarget: 'under',
+		            blankText: '该字段不能为空',
+		            labelWidth: 120,
+		            name: 'singleNum',
+		            minValue : 0
+				},{
+					xtype: 'numberfield',
+					labelAlign: 'right',
+		            fieldLabel: '工艺备份数量',
+		            name: 'bkNum',
+		            minValue : 0
+				}]
+			}
+		],
+		buttons : [{
+			text : '取消',
+			handler : function() {
+				var form = this.up('form').getForm();
+				form.reset();
+				hideMaterial();
+			}
+		},{
+			text : '添加',
+			formBind : true,
+			handler : function(button, e) {
+				var form = this.up('form').getForm();
+				var params = form.getValues();
+				params['id'] = materialIdx;
+				var mtStore = Ext.getStore('materialsStore');
+				params['typeValue'] = values[params['type']];
+				mtStore.add(params);
+				form.reset();
+				hideMaterial();
+				//id一定不能重复
+				materialIdx -= 1;
+			}
+		}]
+	});
+	var wrapperPanel = new Ext.panel.Panel({
+		id: 'wrapperPanel',
+		width: 800,
+		renderTo: 'addMaterial',
+		padding: '70 0 0 0',
+		margin: '0 0 0 100',
+		items: [materialPanel]
+	});
+	hideMaterial();
+	var store = new Ext.data.Store({
+		autoLoad: true,
+	    model: 'material',
+	    id: 'materialsStore',
+	    data: [],
+	    groupField: 'type'
+	});
+	var groupingFeature= Ext.create('Ext.grid.feature.Grouping',{
+		id: 'groupingFeature',
+        groupHeaderTpl: '{name} 共{rows.length}个'
+    });
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    margin: '0 0 10 0',
+	    disableSelection: false,
+	    loadMask: true,
+	    id: 'gridPanel',
+	    features: [groupingFeature],
+	    store: store,
+	    renderTo: 'bom',
+	    columns:[{
+	        hidden: true,
+	        text: "物料id",
+	        dataIndex: 'id',
+	        ////sortable: false
+	    },{
+	    	hidden: true,
+	        text: "物料类别",
+	        dataIndex: 'type',
+	        ////sortable: false
+	    },{
+	        text: "名称",
+	        dataIndex: 'name',
+	        ////sortable: false
+	    },{
+	    	text: "型号规格",
+	    	dataIndex : 'specification',
+	    	////sortable: false
+	    },{
+	        text: "质量等级或标准要求",
+	        dataIndex: 'level',
+	        ////sortable: false
+	    },{
+			text: "计量单位",
+			dataIndex: "uom",
+			////sortable: false
+		},{
+	        text: "单机",
+	        dataIndex: 'singleNum',
+	        ////sortable: false
+	    },{
+	    	text: '工艺备份数量',
+	    	dataIndex: 'bkNum',
+	    	////sortable: false
+	    },{
+	    	text: '操作',
+	    	xtype: "templatecolumn",
+	    	tpl: "<a style='color: red;' onclick='deleteMaterial()'>删除</a>"
+	    }]
+	});
+	initial();
+});
+
+//加载初始数据
+function initial() {
+	var mtId = getParams('mtid');
+	if (mtId != null) {
+		Ext.Ajax.request({
+		    url: 'list.do',
+		    params: {'id': mtId},
+		    success: function(response){
+		    	if (response.status = 200) {
+		    		var result = eval('(' + response.responseText + ')');
+		    		if (result.state == 0) {
+		    			var mt = result.data.items[0];
+		    			var mtStore = Ext.getStore('materialsStore');
+		    			//将物料加入grid中
+						mtStore.add(mt.materials);
+						Ext.getCmp('mtName').setValue(mt.name);
+						Ext.getCmp('groupName').setValue(mt.groupName);
+						Ext.getCmp('productCode').setValue(mt.productCode);
+		    		}
+		    	}
+		    }
+		});
+	}
+}
+//显示物料添加面板
+function showMaterial() {
+	Ext.getCmp("wrapperPanel").show();
+	Ext.get("addMaterial").setHeight(500);
+}
+//隐藏物料添加面板
+function hideMaterial() {
+	Ext.get("addMaterial").setHeight(0);
+	Ext.getCmp("wrapperPanel").hide();
+}
+//删除物料
+function deleteMaterial() {
+	var gridPanel = Ext.getCmp('gridPanel');
+	var store = gridPanel.getStore();
+	var record = gridPanel.getSelectionModel().getSelection();
+	store.remove(record);
+}
+//保存模板
+function save() {
+	var params = {};
+	var mtId = getParams('mtid');
+	if (mtId != null) {
+		params['id'] = mtId;
+	} else {
+		params['id'] = -1;
+	}
+	params['name'] = Ext.getCmp('mtName').getValue();
+	params['groupName'] = Ext.getCmp('groupName').getValue();
+	params['productCode'] = Ext.getCmp('productCode').getValue();
+	var mtStore = Ext.getStore('materialsStore');
+	var items = mtStore.data.items;
+	for(var i=0; i<items.length; i++){ 
+		var record = items[i].data;
+		params['materials[' + i + '].id'] = record.id;
+		params['materials[' + i + '].bkNum'] = record.bkNum;
+		params['materials[' + i + '].level'] = record.level;
+		params['materials[' + i + '].name'] = record.name;
+		params['materials[' + i + '].singleNum'] = record.singleNum;
+		params['materials[' + i + '].specification'] = record.specification;
+		params['materials[' + i + '].type'] = record.type;
+		params['materials[' + i + '].uom'] = record.uom;
+		params['materials[' + i + '].no'] = record.no;
+		params['materials[' + i + '].typeValue'] = values[record.type];
+	}
+	$.post('saveOrUpdate.do', params, function(response) {
+		var result = eval('('+response+')');
+		if (result.success) {
+    		Ext.Msg.alert('系统提示', result.msg, function(buttonId, text, opt) {
+            	if (buttonId == 'ok'){
+		            window.location.href = "list.html";
+            	}
+            });
+    	} else {
+    		Ext.Msg.alert('系统提示', result.msg);
+    	}
+	});
+}
+</script>
+</body>
+</html>

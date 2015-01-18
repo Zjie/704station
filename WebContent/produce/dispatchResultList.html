@@ -1,0 +1,117 @@
+<html>
+<head>
+    <title>当前排产计划</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+    <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+    <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+    <script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+Ext.onReady(function(){
+    var store = Ext.create('Ext.data.Store', {
+        //pageSize: 20,
+        model: 'disptachResult',
+        autoLoad: true,
+        id: 'disptachResultStore',
+        proxy: {  
+            type: 'ajax', 
+            url : 'currentPlan.do',
+            actionMethods: {
+                create: "POST", read: "POST", update: "POST", destroy: "POST"
+            },
+            reader: {
+                //数据格式为json
+                type: 'json',
+                root: 'data' 
+            }
+		}
+    });
+    var grid = Ext.create('Ext.grid.Panel', {
+        title: '当前排产计划',
+        region: 'center',
+        disableSelection: false,
+        loadMask: true,
+        store: store,
+        viewConfig: {
+            id: 'orderVidewConfig',
+            trackOver: false,
+            stripeRows: false
+        },
+        columns:[{
+            hidden: true,
+            text: "id",
+            dataIndex: 'id',
+            //sortable: false
+        },{
+            hidden: true,
+            text: "oid",
+            dataIndex: 'oid',
+            //sortable: false
+        },{
+            text: "操作",
+            xtype: "templatecolumn",
+            tpl: "<a href='#' onclick='javascript:window.open(\"select.do?oid={oid}\")'>打印派工单</a>"
+        },{
+            text: "订单编号",
+            dataIndex: 'order.no',
+            //sortable: false
+        },
+
+        {
+            text: "课题编号",
+            dataIndex: 'order.project',
+            //sortable: false
+        },{
+            text: "主管工艺",
+            dataIndex : 'order.process',
+            //sortable: false
+        },{
+            text: "使用型号",
+            dataIndex: 'order.model',
+            //sortable: false
+        },{
+            text: "产品名称",
+            dataIndex: "order.productName",
+            //sortable: false
+        },{
+            text: "产品代号",
+            dataIndex: "order.productCode",
+            //sortable: false
+        },
+
+
+
+        {
+            text: "产品批次及编号",
+            dataIndex: "order.productBatchId",
+            //sortable: false
+        },{
+            text: "备注",
+            dataIndex: "order.remark",
+            //sortable: false
+        },
+
+
+        {
+            text: "计划上线日期",
+            dataIndex: 'order.onlineDate',
+            //sortable: false
+        },{
+            text: "计划完成日期",
+            dataIndex : 'order.finishDate',
+            //sortable: false
+        }]
+    });
+    var viewport = Ext.create('Ext.Viewport', {
+        id: 'gridPage',
+        layout: 'border',
+        items: [
+            grid
+        ]
+    });
+});
+</script>
+</body>
+</html>

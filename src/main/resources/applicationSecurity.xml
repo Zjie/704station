@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+  xmlns:beans="http://www.springframework.org/schema/beans"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://www.springframework.org/schema/beans
+           http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+           http://www.springframework.org/schema/security
+           http://www.springframework.org/schema/security/spring-security.xsd">
+	<!-- 不要过滤图片等静态资源 -->
+    <http pattern="/**/*.jpg" security="none"/>
+    <http pattern="/**/*.png" security="none"/>
+    <http pattern="/**/*.gif" security="none"/>
+    <http pattern="/**/*.css" security="none"/>
+    <http pattern="/**/*.js" security="none"/>
+    
+    <http pattern="/login.jsp*" security="none"/>
+    <http pattern="/jsp/forgotpassword.jsp" security="none"/>
+    
+	<http auto-config="true">
+		<access-denied-handler ref="accessDeniedHandler"/>
+		<form-login login-page="/login.jsp"
+			authentication-failure-url="/login.jsp?flag=1"
+			default-target-url="/index.do" />
+		<!-- 增加一个自定义的filter，放在FILTER_SECURITY_INTERCEPTOR之前， 实现用户、角色、权限、资源的数据库管理。 -->
+		<custom-filter ref="securityFilter" before="FILTER_SECURITY_INTERCEPTOR" />
+		<logout invalidate-session="true"  
+		      logout-success-url="/login.jsp"  
+		      logout-url="/logOut"/>
+	</http>
+
+	<!-- 一个自定义的filter，必须包含authenticationManager, accessDecisionManager,securityMetadataSource三个属性。 -->
+	<beans:bean id="securityFilter" class="cn.edu.ustb.sem.core.auth.FilterSecurityInterceptor">
+		<beans:property name="authenticationManager" ref="authenticationManager" />
+		<beans:property name="accessDecisionManager" ref="accessDecisionManager" />
+		<beans:property name="securityMetadataSource" ref="securityMetadataSource" />
+		<beans:property name="alwaysReauthenticate" value="true"></beans:property>
+	</beans:bean>
+	<authentication-manager alias="authenticationManager">
+	      <authentication-provider ref="myAuProvider" />
+	      <authentication-provider ref="anonymousProvider" />
+	 </authentication-manager>
+	<beans:bean id="myAuProvider" class="cn.edu.ustb.sem.core.auth.DefaultUserDetailsAuthenticationProvider" init-method="init">
+		<beans:property name="maxCacheNum" value="${cache.maxCacheNum}"></beans:property>
+		<beans:property name="authenticationExpiredTimes" value="${cache.authenticationExpiredTimes}"></beans:property>
+	</beans:bean>
+	<beans:bean id="anonymousProvider" class="cn.edu.ustb.sem.core.auth.AnonymousProvider"></beans:bean>
+
+	<!-- 访问决策器，决定某个用户具有的角色，是否有足够的权限去访问某个资源。 -->
+	<beans:bean id="accessDecisionManager" class="cn.edu.ustb.sem.core.auth.DefaultAccessDecisionManager">
+	</beans:bean>
+
+	<!-- 资源源数据定义，将所有的资源和权限对应关系建立起来，即定义某一资源可以被哪些角色去访问。 -->
+	<beans:bean id="securityMetadataSource"
+		class="cn.edu.ustb.sem.core.auth.service.InvocationSecurityMetadataSourceService">
+		<beans:property name="maximumSize" value="${cache.url.maximumSize}"></beans:property>
+		<beans:property name="refreshAfterWrite" value="${cache.urlCache.refreshAfterWrite}"></beans:property>
+	</beans:bean>
+	
+	<!-- 拒绝访问控制器 -->
+	<beans:bean id="accessDeniedHandler" class="cn.edu.ustb.sem.core.auth.DefaultAccessDeniedHandler">
+		<beans:property name="errorPage" value="/404.html"></beans:property>
+	</beans:bean>
+</beans:beans>
