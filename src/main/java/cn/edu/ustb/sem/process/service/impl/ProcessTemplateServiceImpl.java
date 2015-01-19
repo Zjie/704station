@@ -158,12 +158,13 @@ public class ProcessTemplateServiceImpl extends BaseServiceImpl<ProcessTemplate,
 			if (row == null) {
 				break;
 			}
+			boolean hitEnd = false;
 			//流程
 			cell = row.getCell(9);
 			if (cell != null) {
 				String part = cell.getStringCellValue();
 				if (part.toLowerCase().equals("3e")) {
-					break;
+					hitEnd = true;
 				}
 			}
 			cell = row.getCell(10);
@@ -229,6 +230,8 @@ public class ProcessTemplateServiceImpl extends BaseServiceImpl<ProcessTemplate,
 			ptp.setPt(pt);
 			p.setPtp(ptp);
 			ptps.add(ptp);
+			if (hitEnd)
+				break;
 		}
 		pt.setPtps(ptps);
 		return flag;

@@ -137,14 +137,14 @@ public class Order implements Serializable {
 	private User waixieRestarter;
 	
 	
-	//物料齐套时间
+	//物料齐套时间--与配套相关
 	@Column(name = "materials_completeness", nullable = true)
 	@Temporal(TemporalType.TIMESTAMP)
 	private Calendar materialsCompleteness;
-	
+	//零件齐套时间
 	@Column(name = "component_completeness", nullable = true)
 	private Calendar componentCompleteness;
-	
+	//物资齐套时间
 	@Column(name = "materials_qitao_time", nullable = true)
 	private Calendar materialsQitaoTime;
 	
@@ -264,6 +264,24 @@ public class Order implements Serializable {
 	//物料配套信息, 0未配套 1配套中 2已齐套
 	@Column(name = "assign_status", nullable = false)
 	private Byte assignStatus;
+	
+	////////////////////////////////////////////////////////
+	//////////////////////2015-01-20 增加额外字段
+	//产品类别
+	@Column(name = "product_type")
+	private String productType;
+	//车间备注
+	@Column(name = "factory_remark")
+	private String factoryRemark;
+	//最后一次计划更改日期
+	@Column(name = "last_adjust_date")
+	private String lastAdjustDate;
+	//计划更改次数
+	@Column(name = "plan_adjust_num")
+	private String planAdjustNum;
+	//工艺员
+	@Column(name = "gongyiyuan")
+	private String gongyiyuan;
 	
 	public Byte getMaterialIsChecked() {
 		return materialIsChecked;
@@ -606,6 +624,12 @@ public class Order implements Serializable {
 		
 		this.banzu = om.getBanzu();
 		this.assignStatus = new Byte(om.getAssignStatus() + "");
+		
+		this.factoryRemark = om.getFactoryRemark();
+		this.productType = om.getProductType();
+		this.planAdjustNum = om.getPlanAdjustNum();
+		this.gongyiyuan = om.getGongyiyuan();
+		this.lastAdjustDate = om.getLastAdjustDate();
 	}
 	public Calendar getReportBeginTime() {
 		return reportBeginTime;
@@ -796,6 +820,36 @@ public class Order implements Serializable {
 	}
 	public void setAssignStatus(Byte assignStatus) {
 		this.assignStatus = assignStatus;
+	}
+	public String getProductType() {
+		return productType;
+	}
+	public void setProductType(String productType) {
+		this.productType = productType;
+	}
+	public String getFactoryRemark() {
+		return factoryRemark;
+	}
+	public void setFactoryRemark(String factoryRemark) {
+		this.factoryRemark = factoryRemark;
+	}
+	public String getLastAdjustDate() {
+		return lastAdjustDate;
+	}
+	public void setLastAdjustDate(String lastAdjustDate) {
+		this.lastAdjustDate = lastAdjustDate;
+	}
+	public String getPlanAdjustNum() {
+		return planAdjustNum;
+	}
+	public void setPlanAdjustNum(String planAdjustNum) {
+		this.planAdjustNum = planAdjustNum;
+	}
+	public String getGongyiyuan() {
+		return gongyiyuan;
+	}
+	public void setGongyiyuan(String gongyiyuan) {
+		this.gongyiyuan = gongyiyuan;
 	}
 	
 }

@@ -107,6 +107,15 @@ Ext.define('order', {
         //物料配套状态
         {name : 'assignStatus', type : 'int'},
         {name : 'assignItems', type : 'string'},
+        {name : 'assignNums', type : 'string'},
+
+
+        /////////////2015-01-20 增加5个字段
+        {name : 'factoryRemark', type : 'string'},
+        {name : 'gongyiyuan', type : 'string'},
+        {name : 'planAdjustNum', type : 'string'},
+        {name : 'productType', type : 'string'},
+        {name : 'lastAdjustDate', type : 'string'},
     ],
     idProperty: 'id'
 });

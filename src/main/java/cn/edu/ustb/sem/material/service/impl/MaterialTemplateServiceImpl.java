@@ -510,7 +510,12 @@ public class MaterialTemplateServiceImpl extends
 		model.setProductCode(pc);
 		MtProductCode mpc = productCodeDao.find(model);
 		if (mpc == null) {
-			return null;
+			//通用模板
+			model.setProductCode("*");
+			mpc = productCodeDao.find(model);
+			if (mpc == null) {
+				return null;
+			}
 		}
 		return mpc.getMt();
 	}

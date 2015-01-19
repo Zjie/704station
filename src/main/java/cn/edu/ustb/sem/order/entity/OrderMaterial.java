@@ -219,7 +219,7 @@ public class OrderMaterial implements Serializable {
 	}
 	public int getAssignedNum() {
 		if (this.as == null || this.as.size() == 0)
-			return -1;
+			return 0;
 		int totalAssignNum = 0;
 		for (Assign as : this.as) {
 			totalAssignNum += as.getMatingNum();

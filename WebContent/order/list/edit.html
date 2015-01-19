@@ -262,6 +262,49 @@ Ext.onReady(function() {
 		            name: 'remark',
 		            id: 'remark',
 				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '车间备注',
+		            readOnly: readOnly,
+		            name: 'factoryRemark',
+		            id: 'factoryRemark',
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '工艺员',
+		            name: 'gongyiyuan',
+		            id: 'gongyiyuan',
+		            readOnly: readOnly,
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '产品类别',
+		            readOnly: readOnly,
+		            name: 'productType',
+		            id: 'productType',
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '计划更改次数',
+		            readOnly: readOnly,
+		            name: 'planAdjustNum',
+		            id: 'planAdjustNum',
+				},{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '最后一次计划更改日期',
+		            name: 'lastAdjustDate',
+		            id: 'lastAdjustDate',
+		            readOnly: readOnly,
+				}]
 			}
 		]
 	});
@@ -414,6 +457,13 @@ function initial() {
 						Ext.getCmp('stockInDate').setValue(info.stockInDate);
 						Ext.getCmp('certificateDate').setValue(info.certificateDate);
 						Ext.getCmp('remark').setValue(info.remark);
+
+						Ext.getCmp('factoryRemark').setValue(info.factoryRemark);
+						Ext.getCmp('gongyiyuan').setValue(info.gongyiyuan);
+						Ext.getCmp('planAdjustNum').setValue(info.planAdjustNum);
+						Ext.getCmp('productType').setValue(info.productType);
+						Ext.getCmp('lastAdjustDate').setValue(info.lastAdjustDate);
+
 
 		    			var mtStore = Ext.getStore('materialsStore');
 						mtStore.add(info.orderMaterials);

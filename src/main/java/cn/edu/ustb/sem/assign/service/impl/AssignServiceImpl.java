@@ -114,7 +114,7 @@ public class AssignServiceImpl extends
 			int assigned = 0;
 			if (uploadAssign.containsKey(om.getId())) {
 				assigned = uploadAssign.get(om.getId());
-			} else if (om.getAs() == null || om.getAs().size() ==0) {
+			} else if ((om.getAs() == null || om.getAs().size() ==0) && om.getSingleNum() != 0) {
 				//如果有物料没有进行配套，则
 				isFinished = false;
 				continue;

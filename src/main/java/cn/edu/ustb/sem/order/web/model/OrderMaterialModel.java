@@ -48,8 +48,8 @@ public class OrderMaterialModel {
 		Set<Assign> assignSet=bo.getAs();
 		if(assignSet!=null){
 			for(Assign assign:assignSet){
-				AssignModel am=new AssignModel(assign);
-				total+=assign.getMatingNum();
+				AssignModel am = new AssignModel(assign);
+				total += assign.getMatingNum();
 				ams.add(am);
 			}
 		}

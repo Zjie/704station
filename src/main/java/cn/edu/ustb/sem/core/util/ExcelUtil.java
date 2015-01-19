@@ -10,6 +10,8 @@ import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 
+import cn.edu.ustb.sem.core.exception.CellParseException;
+
 public class ExcelUtil {
 	public static final String DEFAULT_AUTHOR = "ustb zhoujie";
 	
@@ -83,5 +85,25 @@ public class ExcelUtil {
 		}
 		
 		return null;
+	}
+	
+	
+	public static final String getCellStringCanNull(Row row, int no, String fieldName) throws CellParseException {
+		Cell cell = row.getCell(no);
+		if (cell == null) {
+			return "";
+		} else {
+			int type = cell.getCellType();
+			if (type == Cell.CELL_TYPE_BLANK) {
+				return "";
+			} else if (type == Cell.CELL_TYPE_STRING) {
+				return cell.getStringCellValue();
+			} else if (type == Cell.CELL_TYPE_NUMERIC) {
+				return cell.getNumericCellValue() + "";
+			} else {
+				ExcelUtil.createCommentForCell(cell, fieldName + "必须是字符串");
+				throw new CellParseException();
+			}
+		}
 	}
 }
