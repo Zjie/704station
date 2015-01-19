@@ -248,7 +248,7 @@ function save() {
 			} 
 			var hours = Ext.getDom('time'+record.id).value;
 			if(hours == "" || hours == null){
-				Ext.Msg.alert("错误","请填写排产时间！");
+				Ext.Msg.alert("错误","请填写操作耗时！");
 				return;
 			}else{
 				params['produceReports[' + j + '].reportTime'] = parseInt(hours);
