@@ -14,6 +14,9 @@ import cn.edu.ustb.sem.order.entity.OrderStatus;
 public class OrderDaoImpl extends BaseDaoImpl<Order, Integer> implements OrderDao {
 
 	public List<Order> getAutoScheduleOrder(int pn, int pageSize){
+		//可自动排产的订单
+		//1.物料齐套，物料信息被确认，工序信息被确认
+		//2.强制排产
 		String hql = "from " + this.tableName + " o where (o.status = " + OrderStatus.ready + " "
 				+ "and o.processIsCheck = " + Order.PROCESS_IS_CHECKED + " "
 				+ "and o.materialIsChecked = " + Order.MATERIAL_IS_CHECKED + ") "
@@ -24,14 +27,16 @@ public class OrderDaoImpl extends BaseDaoImpl<Order, Integer> implements OrderDa
 	public List<Order> listForceScheduleOrder() {
 		String hql = "from " + this.tableName + " o where (o.status = " + OrderStatus.initial + " "
 				+ "or o.processIsCheck = " + Order.PROCESS_IS_NOT_CHECKED + " "
-				+ "or o.materialIsChecked = " + Order.PROCESS_IS_NOT_CHECKED + ") "
-				+ "and o.status != " + OrderStatus.forced;
+				+ "or o.materialIsChecked = " + Order.PROCESS_IS_NOT_CHECKED + ") ";
+				//+ "or o.status = " + OrderStatus.forced;
 		return list(hql, -1, -1);
 	}
 	
 	public int getAutoScheduleOrderCount(){
-		String hql = "from " + this.tableName + " o where o.status = " + OrderStatus.ready + " "
-				+ "or o.status = " + OrderStatus.ready;
+		String hql = "from " + this.tableName + " o where (o.status = " + OrderStatus.ready + " "
+				+ "and o.processIsCheck = " + Order.PROCESS_IS_CHECKED + " "
+				+ "and o.materialIsChecked = " + Order.MATERIAL_IS_CHECKED + ") "
+				+ "or o.status = " + OrderStatus.forced;
 		return list(hql, -1, -1).size();
 	}
 

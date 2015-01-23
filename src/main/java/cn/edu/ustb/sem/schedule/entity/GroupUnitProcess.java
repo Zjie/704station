@@ -30,6 +30,7 @@ public class GroupUnitProcess implements Serializable {
 		this.unit = form.getUnit();
 		this.type = form.getTypeValue();
 		this.afterProcessGroup = form.getAfterProcessGroup();
+		this.remark = form.getRemark();
 	}
 	private static final long serialVersionUID = 9094002424194260342L;
 	@Id
@@ -52,6 +53,8 @@ public class GroupUnitProcess implements Serializable {
 	private Integer afterProcessGroup;
 	@Column(name = "type")
 	private Integer type;
+	@Column(name = "remark")
+	private String remark;
 	@OneToMany(mappedBy = "gup", fetch = FetchType.LAZY, targetEntity=ProcessGroupWorker.class, cascade={CascadeType.REFRESH})
 	private Set<ProcessGroupWorker> pgw;
 	
@@ -103,4 +106,11 @@ public class GroupUnitProcess implements Serializable {
 	public void setType(Integer type) {
 		this.type = type;
 	}
+	public String getRemark() {
+		return remark;
+	}
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+	
 }

@@ -21,6 +21,7 @@ public class GroupUnitProcessModel {
 	private Integer afterProcessGroup;
 	private String type;
 	private Integer typeValue;
+	private String remark;
 	
 	private List<ProcessWorkerModel> pgws;
 	public GroupUnitProcessModel(){}
@@ -33,6 +34,7 @@ public class GroupUnitProcessModel {
 		this.afterProcessGroup = gup.getAfterProcessGroup();
 		int type = gup.getType();
 		this.typeValue = type;
+		this.remark = gup.getRemark();
 		if (type == 0) {
 			this.type = "外协";
 		} else if (type == 1) {
@@ -102,6 +104,12 @@ public class GroupUnitProcessModel {
 	}
 	public void setPgws(List<ProcessWorkerModel> pgws) {
 		this.pgws = pgws;
+	}
+	public String getRemark() {
+		return remark;
+	}
+	public void setRemark(String remark) {
+		this.remark = remark;
 	}
 	
 }

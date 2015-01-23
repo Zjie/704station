@@ -116,7 +116,8 @@ public class ScheduleInfoServiceImpl implements ScheduleInfoService {
 			ProcessGroupWorker model = new ProcessGroupWorker();
 			model.setGup(new GroupUnitProcess(gup.getId()));
 			this.pgwDao.deleteObject(model);
-			this.gupDao.saveOrUpdate(gup);
+			this.gupDao.merge(gup);
+//			this.gupDao.saveOrUpdate(gup);
 		} else {
 			this.gupDao.save(gup);
 		}

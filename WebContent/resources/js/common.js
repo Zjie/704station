@@ -350,6 +350,7 @@ Ext.define('processGroup', {
         {name : 'type', type : 'string'},
         {name : 'typeValue', type : 'int'},
         {name : 'afterProcessGroup', type : 'int'},
+        {name : 'remark', type : 'string'},
     ],
     idProperty: 'id'
 });

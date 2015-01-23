@@ -142,6 +142,16 @@ Ext.onReady(function() {
 					name: 'afterProcessGroup',
 					id: 'afterProcessGroup',
 				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: 'right',
+					fieldLabel: '备注信息',
+					name: 'remark',
+					id: 'remark',
+				}]
 			},
 		]
 	});
@@ -330,6 +340,7 @@ function initial() {
 		    			//form.findField('type').setValue(data.type);
 		    			form.findField('typeValue').setValue(data.typeValue);
 		    			form.findField('afterProcessGroup').setValue(data.afterProcessGroup);
+		    			form.findField('remark').setValue(data.remark);
 		    			var processWorkerStore = Ext.getStore('processWorkerStore');
 		    			var workers = new Array();
 		    			for (var ele in data.pgws) {
@@ -371,6 +382,7 @@ function save() {
 	params['processGroup'] = processGroup;
 	params['typeValue'] = typeValue;
 	params['afterProcessGroup'] = afterProcessGroup;
+	params['remark'] = form.findField('remark').getValue();
 	//取出每个工人的信息
 	var store = Ext.getStore('processWorkerStore');
 	var items = store.data.items;

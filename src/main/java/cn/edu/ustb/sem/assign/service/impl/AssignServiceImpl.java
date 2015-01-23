@@ -29,6 +29,7 @@ import cn.edu.ustb.sem.order.dao.OrderDao;
 import cn.edu.ustb.sem.order.dao.OrderMaterialDao;
 import cn.edu.ustb.sem.order.entity.Order;
 import cn.edu.ustb.sem.order.entity.OrderMaterial;
+import cn.edu.ustb.sem.order.entity.OrderStatus;
 import cn.edu.ustb.sem.order.service.OrderService;
 
 @Service("assignService")
@@ -128,10 +129,12 @@ public class AssignServiceImpl extends
 				break;
 			}
 		}
+		Order oo = this.orderService.get(o.getId());
 		if (isFinished) {
 			status = Order.ASSIGN_STATUS_FINISHED;
+			//更新订单信息
+			oo.setStatus(new Byte(OrderStatus.ready + ""));
 		}
-		Order oo = this.orderService.get(o.getId());
 		oo.setAssignStatus(status);
 		this.orderService.update(oo);
 	}
