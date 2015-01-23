@@ -11,7 +11,7 @@
 <script type="text/javascript">
 Ext.onReady(function(){
 	var gongxuStore = new Ext.data.Store({
-		fields: ['id', 'name'],
+		fields: ['id', 'name', 'remark'],
 	    id: 'scheduledResult',
 	    data: [],
 	});
@@ -133,16 +133,31 @@ var tinggong = new Ext.form.FormPanel(
 		            				return;
 		            			}
 		            			$.post("findOrderSr.do?code=" + code, null, function(response){
-		            				gongxuStore.removeAll();
 		            				if (response.success) {
+		            					gongxuStore.removeAll();
 		            					gongxuStore.add(response.data);
 		            				} else {
 		            					Ext.Msg.alert('系统提示', response.msg);
 		            				}
 		            			});
 		            		}
+		            	},
+		            	change: function(com){
+		            		var remark = Ext.getStore('scheduledResult').data.get(com.getValue()).data.remark;
+		            		Ext.getCmp('remark').setValue(remark);
 		            	}
+		            	
 		            }
+				}]
+			},{
+				layout: 'column',
+				border: 0,
+				items: [{
+					xtype: 'textfield',
+					labelAlign: "right",
+		            fieldLabel: '工序组备注信息',
+		            name: 'remark',
+		            id: 'remark'
 				}]
 			}
 		]

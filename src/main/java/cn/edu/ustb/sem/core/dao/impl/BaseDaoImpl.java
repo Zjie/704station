@@ -398,4 +398,5 @@ public abstract class BaseDaoImpl<M extends java.io.Serializable, PK extends jav
     		}
     	}
     }
+
 }

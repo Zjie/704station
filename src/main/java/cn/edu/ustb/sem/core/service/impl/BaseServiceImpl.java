@@ -77,7 +77,7 @@ public abstract class BaseServiceImpl<Bo extends java.io.Serializable, Vo, PK ex
     }
     @Override
     public Page<Bo> listAll(Bo model, int pn, int pageSize) throws ServiceException {
-    	Integer count = this.countAll();
+    	Integer count = this.baseDao.count(model);
     	List<Bo> items = this.baseDao.listAll(model, pn, pageSize);
     	return PageUtil.getPage(count, pn, items, pageSize);
     }
@@ -134,4 +134,5 @@ public abstract class BaseServiceImpl<Bo extends java.io.Serializable, Vo, PK ex
    public Bo find(Bo model) throws ServiceException {
 	   return baseDao.find(model);
    }
+
 }

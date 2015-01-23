@@ -29,6 +29,7 @@ import cn.edu.ustb.sem.order.entity.OrderProcess;
 import cn.edu.ustb.sem.order.service.OrderService;
 import cn.edu.ustb.sem.order.web.model.OrderModel;
 import cn.edu.ustb.sem.order.web.model.OrderProcessModel;
+import cn.edu.ustb.sem.order.web.model.ProduceOtherSearchForm;
 import cn.edu.ustb.sem.process.service.PtProductCodeService;
 import cn.edu.ustb.sem.produce.dao.PrintHistoryDao;
 import cn.edu.ustb.sem.produce.dao.ProduceAssembledDao;
@@ -107,6 +108,7 @@ public class ReportServiceImpl implements ReportService {
 	private ProduceTestDao ptDao;
 	@Autowired
 	private DispatchUnitDao duDao;
+
 	@Override
 	public List<OrderModel> getCanReportOrder(Integer workerId)
 			throws ServiceException {
@@ -124,10 +126,10 @@ public class ReportServiceImpl implements ReportService {
 		 * orders.add(new OrderModel(o)); } return orders;
 		 **/
 		List<OrderModel> orders = new ArrayList<OrderModel>();
-//		Worker model = new Worker();
-//		User u = new User();
-//		u.setId(v.getUid());
-//		model.setUser(u);
+		// Worker model = new Worker();
+		// User u = new User();
+		// u.setId(v.getUid());
+		// model.setUser(u);
 		Worker w = workerDao.get(workerId);
 		// 查找属于这个单元下的排产计划，并且排产结果是调度员确认过的
 		ScheduleResult sr = new ScheduleResult();
@@ -170,7 +172,7 @@ public class ReportServiceImpl implements ReportService {
 			throw new ServiceException("缺失参数");
 		}
 		List<ProduceAssembingModel> prms = model.getProduceReports();
-		//如果没有报过工，则说明这是第一次报工，为报工开始时间
+		// 如果没有报过工，则说明这是第一次报工，为报工开始时间
 		Integer orderId = model.getOrderId();
 		Order order = orderDao.get(orderId);
 		List<ProduceAssembling> prs = this.reportDao.getPrByOrderId(orderId);
@@ -186,9 +188,9 @@ public class ReportServiceImpl implements ReportService {
 				e.printStackTrace();
 			}
 		}
-		//到目前为止一共完成了多少个
-		//只要找出最小那个工序组即可
-		//注意，要限制即使是外协这样的工序组，也要报多少个完成了
+		// 到目前为止一共完成了多少个
+		// 只要找出最小那个工序组即可
+		// 注意，要限制即使是外协这样的工序组，也要报多少个完成了
 		int minReportNum = 0;
 		for (ProduceAssembingModel prm : prms) {
 			ProduceAssembling produceReport = new ProduceAssembling();
@@ -201,10 +203,12 @@ public class ReportServiceImpl implements ReportService {
 			Visitor visitor = (Visitor) SecurityContextHolder.getContext()
 					.getAuthentication();
 			User u = this.userDao.get(visitor.getUid());
-			if (u == null) throw new ServiceException("不存在该用户，无法进行报工");
+			if (u == null)
+				throw new ServiceException("不存在该用户，无法进行报工");
 			Worker w = u.getWorker();
-			if (w == null) throw new ServiceException("只有工人才能进行报工操作");
-			
+			if (w == null)
+				throw new ServiceException("只有工人才能进行报工操作");
+
 			produceReport.setWorker(w);
 			produceReport.setUdate(udate);
 			if (produceReport.getId() == null || produceReport.getId() <= 0) {
@@ -224,54 +228,58 @@ public class ReportServiceImpl implements ReportService {
 			orderDao.update(order);
 		}
 	}
+
 	/**
-	 * needAuth: 是否需要权限验证；加上权限认证，某个工人，只能对他所在的生产单元下的订单进行报工
-	 * workerId: 用于过滤出某个员工的报工情况
+	 * needAuth: 是否需要权限验证；加上权限认证，某个工人，只能对他所在的生产单元下的订单进行报工 workerId:
+	 * 用于过滤出某个员工的报工情况
 	 */
 	@Override
-	public Map<String, Object> produceReport(Integer id, boolean needAuth, Integer workerId)
-			throws ServiceException {
+	public Map<String, Object> produceReport(Integer id, boolean needAuth,
+			Integer workerId) throws ServiceException {
 		Order order = this.orderDao.get(id);
 		if (needAuth) {
 			checkProduceReportAuth(order);
 		}
-		if (order == null) throw new ServiceException("该订单不存在");
+		if (order == null)
+			throw new ServiceException("该订单不存在");
 		Worker w = null;
 		if (workerId != null) {
 			w = this.workerDao.get(workerId);
 		}
 		OrderModel orderModel = new OrderModel(order, w, null, null);
-		//填充每个工序组的最早开始时间和最迟完成时间
+		// 填充每个工序组的最早开始时间和最迟完成时间
 		List<OrderProcessModel> ops = orderModel.getOrderProcesses();
 		for (OrderProcessModel op : ops) {
 			String groupName = op.getGroupName() + "";
-			Calendar begin = this.srService.getEarlistBeginDateTime(groupName, id);
+			Calendar begin = this.srService.getEarlistBeginDateTime(groupName,
+					id);
 			op.setBeginDate(DateUtil.getDate(begin, "yyyy-MM-dd"));
 			Calendar end = this.srService.getLastEndDateTime(groupName, id);
 			op.setEndDate(DateUtil.getDate(end, "yyyy-MM-dd"));
 		}
-		
+
 		// String productCode = order.getProductCode();
 		// PtProductCode model = new PtProductCode(productCode);
 		// PtProductCode ptProductCode = this.ptProductCodeService.find(model);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("order", JSON.toJSONString(orderModel));
-		
-		//获取该订单所有的装配报工详情
+
+		// 获取该订单所有的装配报工详情
 		Set<OrderProcess> opps = order.getOps();
 		List<ProduceAssembingModel> pams = new ArrayList<ProduceAssembingModel>();
 		for (OrderProcess op : opps) {
 			Set<ProduceAssembling> pas = op.getPrs();
 			for (ProduceAssembling pa : pas) {
-				if (workerId != null && !pa.getWorker().getId().equals(workerId)) {
+				if (workerId != null
+						&& !pa.getWorker().getId().equals(workerId)) {
 					continue;
 				}
 				pams.add(new ProduceAssembingModel(pa));
 			}
 		}
 		result.put("zhuangpei", JSON.toJSONString(pams));
-		
-		//获取该订单的试验报工详情
+
+		// 获取该订单的试验报工详情
 		List<ProduceTestModel> ptms = new ArrayList<ProduceTestModel>();
 		Set<ProduceTest> pts = order.getProduceTest();
 		for (ProduceTest pt : pts) {
@@ -281,7 +289,7 @@ public class ReportServiceImpl implements ReportService {
 			ptms.add(new ProduceTestModel(pt));
 		}
 		result.put("shiyan", JSON.toJSONString(ptms));
-		//典试报工
+		// 典试报工
 		List<ProduceDianshiModel> pdms = new ArrayList<ProduceDianshiModel>();
 		Set<ProduceDianshi> pds = order.getProduceDianshi();
 		for (ProduceDianshi pd : pds) {
@@ -291,7 +299,7 @@ public class ReportServiceImpl implements ReportService {
 			pdms.add(new ProduceDianshiModel(pd));
 		}
 		result.put("dianshi", JSON.toJSONString(pdms));
-		//其他报工
+		// 其他报工
 		List<ProduceOtherModel> poms = new ArrayList<ProduceOtherModel>();
 		Set<ProduceOther> pos = order.getProduceother();
 		for (ProduceOther po : pos) {
@@ -305,6 +313,7 @@ public class ReportServiceImpl implements ReportService {
 		result.put("ptid", -1);
 		return result;
 	}
+
 	private void checkProduceReportAuth(Order order) throws ServiceException {
 		Visitor visitor = (Visitor) SecurityContextHolder.getContext()
 				.getAuthentication();
@@ -420,24 +429,28 @@ public class ReportServiceImpl implements ReportService {
 
 	@Override
 	public GridModel<ProduceAssembingModel> getProduceReportByForm(
-			WorkerKpiSearchForm form)
-			throws ServiceException {
-		if (form.getDateBegin() == null || form.getDateEnd() == null) throw new ServiceException("开始时间或结束时间不能为空");
+			WorkerKpiSearchForm form) throws ServiceException {
+		if (form.getDateBegin() == null || form.getDateEnd() == null)
+			throw new ServiceException("开始时间或结束时间不能为空");
 		try {
 			Date begin = DateUtil.parseDate(form.getDateBegin()).getTime();
 			Date end = DateUtil.parseDate(form.getDateEnd()).getTime();
-			String hql = "from " + ProduceAssembling.class.getSimpleName() + " as pro where pro.udate >= ? and pro.udate <= ?";
-			List<ProduceAssembling> prs = this.assemblingDao.list(hql, form.getPage(), form.getLimit(), begin, end);
-			 GridModel<ProduceAssembingModel> grid =  new GridModel<ProduceAssembingModel>();
-			 List<ProduceAssembingModel> items = new ArrayList<ProduceAssembingModel>();
-			 for (ProduceAssembling pr : prs) {
-				 items.add(new ProduceAssembingModel(pr));
-			 }
-			 grid.setItems(items);
-			 hql = "select count(*) from " + ProduceAssembling.class.getSimpleName() + " as pro where pro.udate >= ? and pro.udate <= ?";
-			 int total =  this.assemblingDao.count(hql, begin, end);
-			 grid.setTotalNum(total);
-			 return grid;
+			String hql = "from " + ProduceAssembling.class.getSimpleName()
+					+ " as pro where pro.udate >= ? and pro.udate <= ?";
+			List<ProduceAssembling> prs = this.assemblingDao.list(hql,
+					form.getPage(), form.getLimit(), begin, end);
+			GridModel<ProduceAssembingModel> grid = new GridModel<ProduceAssembingModel>();
+			List<ProduceAssembingModel> items = new ArrayList<ProduceAssembingModel>();
+			for (ProduceAssembling pr : prs) {
+				items.add(new ProduceAssembingModel(pr));
+			}
+			grid.setItems(items);
+			hql = "select count(*) from "
+					+ ProduceAssembling.class.getSimpleName()
+					+ " as pro where pro.udate >= ? and pro.udate <= ?";
+			int total = this.assemblingDao.count(hql, begin, end);
+			grid.setTotalNum(total);
+			return grid;
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
@@ -447,9 +460,10 @@ public class ReportServiceImpl implements ReportService {
 	@Override
 	public OrderModel getFinishedNum(Integer orderId) throws ServiceException {
 		Order order = this.orderDao.get(orderId);
-		if (order == null) throw new ServiceException("该订单不存在");
+		if (order == null)
+			throw new ServiceException("该订单不存在");
 		OrderModel orderModel = new OrderModel(order);
-		//填充每个工序组的最早开始时间和最迟完成时间
+		// 填充每个工序组的最早开始时间和最迟完成时间
 		List<OrderProcessModel> ops = orderModel.getOrderProcesses();
 		int minFinishedNum = -1;
 		for (OrderProcessModel op : ops) {
@@ -468,10 +482,12 @@ public class ReportServiceImpl implements ReportService {
 	public void produceAssembledReport(Integer orderId, Integer num,
 			Integer userId, String reportDate) throws ServiceException {
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("不存在该订单");
+		if (o == null)
+			throw new ServiceException("不存在该订单");
 		User u = this.userDao.get(userId);
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才能进行装配报工");
+		if (w == null)
+			throw new ServiceException("只有工人才能进行装配报工");
 		Calendar udate = Calendar.getInstance();
 		if (reportDate != null && !reportDate.isEmpty()) {
 			try {
@@ -480,8 +496,8 @@ public class ReportServiceImpl implements ReportService {
 				e.printStackTrace();
 			}
 		}
-		//投产数量 >= 在制数量 >= 完成数量
-		//先查找该订单的在制数量
+		// 投产数量 >= 在制数量 >= 完成数量
+		// 先查找该订单的在制数量
 		int assemblingNum = o.getAssemblingNum();
 		int assembledNum = o.getAssembledNum();
 		if (assemblingNum < num - assembledNum) {
@@ -496,15 +512,18 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public void reportTestingNum(Integer orderId, Integer num, String content, String reportDate)
-			throws ServiceException {
-		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+	public void reportTestingNum(Integer orderId, Integer num, String content,
+			String reportDate) throws ServiceException {
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("该订单不存在");
+		if (o == null)
+			throw new ServiceException("该订单不存在");
 		User u = this.userDao.get(v.getUid());
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才可以进行实验报工");
-		//完成的装配个数 - 在验个数 - 完成试验个数 >= 可以上报的个数
+		if (w == null)
+			throw new ServiceException("只有工人才可以进行实验报工");
+		// 完成的装配个数 - 在验个数 - 完成试验个数 >= 可以上报的个数
 		if (o.getAssembledNum() - o.getTestedNum() - o.getTestingNum() < num) {
 			throw new ServiceException("可以上报的实验个数 必须小于 完成的装配个数 - 在验个数 - 完成试验个数");
 		}
@@ -529,12 +548,15 @@ public class ReportServiceImpl implements ReportService {
 	@Override
 	public List<ProduceTestModel> getTestReportByWorker(Integer orderId)
 			throws ServiceException {
-		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("该订单不存在");
+		if (o == null)
+			throw new ServiceException("该订单不存在");
 		User u = this.userDao.get(v.getUid());
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才可以进行查看");
+		if (w == null)
+			throw new ServiceException("只有工人才可以进行查看");
 		int wId = w.getId();
 		Set<ProduceTest> pts = o.getProduceTest();
 		List<ProduceTestModel> ptms = new ArrayList<ProduceTestModel>();
@@ -548,23 +570,28 @@ public class ReportServiceImpl implements ReportService {
 
 	@Override
 	public void confirmProduceTest(Integer id) throws ServiceException {
-		if (id == null) throw new ServiceException("请选择一个正确的试验报工");
+		if (id == null)
+			throw new ServiceException("请选择一个正确的试验报工");
 		ProduceTest pt = this.ptDao.get(id);
-		if (pt == null) throw new ServiceException("请选择一个正确的试验报工");
+		if (pt == null)
+			throw new ServiceException("请选择一个正确的试验报工");
 		pt.setStatus(ProduceTest.FINISHED);
 		pt.setConfirmDate(Calendar.getInstance());
 		this.ptDao.update(pt);
 	}
 
 	@Override
-	public void reportDianshiingNum(Integer orderId, Integer num, String content, String reportDate)
-			throws ServiceException {
-		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+	public void reportDianshiingNum(Integer orderId, Integer num,
+			String content, String reportDate) throws ServiceException {
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("该订单不存在");
+		if (o == null)
+			throw new ServiceException("该订单不存在");
 		User u = this.userDao.get(v.getUid());
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才可以进行典试报工");
+		if (w == null)
+			throw new ServiceException("只有工人才可以进行典试报工");
 		if (o.getTestNum() - o.getDianshied() - o.getDianshiing() < num) {
 			throw new ServiceException("可以上报的典试个数 必须小于 全部典试个数 - 在典个数 - 已完成典试个数");
 		}
@@ -582,19 +609,23 @@ public class ReportServiceImpl implements ReportService {
 		pd.setStatus(ProduceDianshi.ON_PROCESS);
 		pd.setTestNum(num);
 		pd.setWorker(w);
-		pd.setContent(content);;
+		pd.setContent(content);
+		;
 		this.pdDao.save(pd);
 	}
 
 	@Override
 	public List<ProduceDianshiModel> getDianshiReportByWorker(Integer orderId)
 			throws ServiceException {
-		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("该订单不存在");
+		if (o == null)
+			throw new ServiceException("该订单不存在");
 		User u = this.userDao.get(v.getUid());
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才可以进行查看");
+		if (w == null)
+			throw new ServiceException("只有工人才可以进行查看");
 		int wId = w.getId();
 		Set<ProduceDianshi> pts = o.getProduceDianshi();
 		List<ProduceDianshiModel> ptms = new ArrayList<ProduceDianshiModel>();
@@ -608,9 +639,11 @@ public class ReportServiceImpl implements ReportService {
 
 	@Override
 	public void confirmProduceDianshi(Integer id) throws ServiceException {
-		if (id == null) throw new ServiceException("请选择一个正确的典试报工");
+		if (id == null)
+			throw new ServiceException("请选择一个正确的典试报工");
 		ProduceDianshi pt = this.pdDao.get(id);
-		if (pt == null) throw new ServiceException("请选择一个正确的典试报工");
+		if (pt == null)
+			throw new ServiceException("请选择一个正确的典试报工");
 		pt.setStatus(ProduceTest.FINISHED);
 		pt.setConfirmDate(Calendar.getInstance());
 		this.pdDao.update(pt);
@@ -619,12 +652,15 @@ public class ReportServiceImpl implements ReportService {
 	@Override
 	public void reportOther(Integer orderId, String content, String reportDate)
 			throws ServiceException {
-		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("该订单不存在");
+		if (o == null)
+			throw new ServiceException("该订单不存在");
 		User u = this.userDao.get(v.getUid());
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才可以进行其他报工");
+		if (w == null)
+			throw new ServiceException("只有工人才可以进行其他报工");
 		Calendar udate = Calendar.getInstance();
 		if (reportDate != null && !reportDate.isEmpty()) {
 			try {
@@ -644,12 +680,15 @@ public class ReportServiceImpl implements ReportService {
 	@Override
 	public List<ProduceOtherModel> getOtherReportByWorker(Integer orderId)
 			throws ServiceException {
-		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
 		Order o = this.orderDao.get(orderId);
-		if (o == null) throw new ServiceException("该订单不存在");
+		if (o == null)
+			throw new ServiceException("该订单不存在");
 		User u = this.userDao.get(v.getUid());
 		Worker w = u.getWorker();
-		if (w == null) throw new ServiceException("只有工人才可以进行查看");
+		if (w == null)
+			throw new ServiceException("只有工人才可以进行查看");
 		int wId = w.getId();
 		Set<ProduceOther> pts = o.getProduceother();
 		List<ProduceOtherModel> ptms = new ArrayList<ProduceOtherModel>();
@@ -668,15 +707,17 @@ public class ReportServiceImpl implements ReportService {
 		try {
 			Date begin = DateUtil.parseDate(beginStr).getTime();
 			Date end = DateUtil.parseDate(endStr).getTime();
-			//记录所有的订单数
+			// 记录所有的订单数
 			Set<Integer> orderIds = new HashSet<Integer>();
-			//装配报工
-			String hql = "from " + ProduceAssembling.class.getSimpleName() + " as pro where pro.udate >= ? and pro.udate <= ?";
-			List<ProduceAssembling> prs = this.assemblingDao.list(hql, -1, -1, begin, end);
+			// 装配报工
+			String hql = "from " + ProduceAssembling.class.getSimpleName()
+					+ " as pro where pro.udate >= ? and pro.udate <= ?";
+			List<ProduceAssembling> prs = this.assemblingDao.list(hql, -1, -1,
+					begin, end);
 			int assemblingNum = 0;
 			Set<Integer> tempOrderIds = new HashSet<Integer>();
 			for (ProduceAssembling pa : prs) {
-//				assemblingNum += pa.getReportNum();
+				// assemblingNum += pa.getReportNum();
 				Integer oid = pa.getOrderProcess().getOrder().getId();
 				if (!orderIds.contains(oid)) {
 					orderIds.add(oid);
@@ -689,8 +730,10 @@ public class ReportServiceImpl implements ReportService {
 				Order o = this.orderDao.get(oid);
 				assemblingNum += o.getAssemblingNum();
 			}
-			hql = "from " + ProduceAssembled.class.getSimpleName() + " as pa where pa.reportDate >= ? and pa.reportDate <= ?";
-			List<ProduceAssembled> pas = this.assembledDao.list(hql, -1, -1, begin, end);
+			hql = "from " + ProduceAssembled.class.getSimpleName()
+					+ " as pa where pa.reportDate >= ? and pa.reportDate <= ?";
+			List<ProduceAssembled> pas = this.assembledDao.list(hql, -1, -1,
+					begin, end);
 			int assembledNum = 0;
 			for (ProduceAssembled pa : pas) {
 				assembledNum += pa.getAssembleNum();
@@ -699,9 +742,12 @@ public class ReportServiceImpl implements ReportService {
 					orderIds.add(oid);
 				}
 			}
-			//试验报工
-			hql = "from " + ProduceTest.class.getSimpleName() + " as pt where pt.reportDate >= ? and pt.reportDate <= ? and pt.status = ?";
-			List<ProduceTest> pts = this.ptDao.list(hql, -1, -1, begin, end, ProduceTest.ON_PROCESS);
+			// 试验报工
+			hql = "from "
+					+ ProduceTest.class.getSimpleName()
+					+ " as pt where pt.reportDate >= ? and pt.reportDate <= ? and pt.status = ?";
+			List<ProduceTest> pts = this.ptDao.list(hql, -1, -1, begin, end,
+					ProduceTest.ON_PROCESS);
 			int testingNum = 0;
 			for (ProduceTest pt : pts) {
 				testingNum += pt.getTestNum();
@@ -710,8 +756,11 @@ public class ReportServiceImpl implements ReportService {
 					orderIds.add(oid);
 				}
 			}
-			hql = "from " + ProduceTest.class.getSimpleName() + " as pt where pt.confirmDate >= ? and pt.confirmDate <= ? and pt.status = ?";
-			List<ProduceTest> pts2 = this.ptDao.list(hql, -1, -1, begin, end, ProduceTest.FINISHED);
+			hql = "from "
+					+ ProduceTest.class.getSimpleName()
+					+ " as pt where pt.confirmDate >= ? and pt.confirmDate <= ? and pt.status = ?";
+			List<ProduceTest> pts2 = this.ptDao.list(hql, -1, -1, begin, end,
+					ProduceTest.FINISHED);
 			int testedNum = 0;
 			for (ProduceTest pt : pts2) {
 				testedNum += pt.getTestNum();
@@ -720,10 +769,13 @@ public class ReportServiceImpl implements ReportService {
 					orderIds.add(oid);
 				}
 			}
-			//典试报工
-			hql = "from " + ProduceDianshi.class.getSimpleName() + " as pd where pd.reportDate >= ? and pd.reportDate <= ? and pd.status = ?";
+			// 典试报工
+			hql = "from "
+					+ ProduceDianshi.class.getSimpleName()
+					+ " as pd where pd.reportDate >= ? and pd.reportDate <= ? and pd.status = ?";
 			int dianshiingNum = 0;
-			List<ProduceDianshi> pds = this.pdDao.list(hql, -1, -1, begin, end, ProduceDianshi.ON_PROCESS);
+			List<ProduceDianshi> pds = this.pdDao.list(hql, -1, -1, begin, end,
+					ProduceDianshi.ON_PROCESS);
 			for (ProduceDianshi pd : pds) {
 				dianshiingNum += pd.getTestNum();
 				Integer oid = pd.getOrder().getId();
@@ -731,9 +783,12 @@ public class ReportServiceImpl implements ReportService {
 					orderIds.add(oid);
 				}
 			}
-			hql = "from " + ProduceDianshi.class.getSimpleName() + " as pd where pd.confirmDate >= ? and pd.confirmDate <= ? and pd.status = ?";
+			hql = "from "
+					+ ProduceDianshi.class.getSimpleName()
+					+ " as pd where pd.confirmDate >= ? and pd.confirmDate <= ? and pd.status = ?";
 			int dianshiedNum = 0;
-			List<ProduceDianshi> pds2 = this.pdDao.list(hql, -1, -1, begin, end, ProduceDianshi.FINISHED);
+			List<ProduceDianshi> pds2 = this.pdDao.list(hql, -1, -1, begin,
+					end, ProduceDianshi.FINISHED);
 			for (ProduceDianshi pd : pds2) {
 				dianshiedNum += pd.getTestNum();
 				Integer oid = pd.getOrder().getId();
@@ -741,7 +796,7 @@ public class ReportServiceImpl implements ReportService {
 					orderIds.add(oid);
 				}
 			}
-			//计算所有订单的总投产数量，总典试数量
+			// 计算所有订单的总投产数量，总典试数量
 			int totalProduceNum = 0;
 			int totalDianshiNum = 0;
 			for (Integer oid : orderIds) {
@@ -771,8 +826,7 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public GridModel<OrderModel> getOrder(Integer id)
-			throws ServiceException {
+	public GridModel<OrderModel> getOrder(Integer id) throws ServiceException {
 		Order order = this.orderDao.get(id);
 		if (order == null) {
 			throw new ServiceException("不存在该订单");
@@ -798,56 +852,58 @@ public class ReportServiceImpl implements ReportService {
 			if (form.getDateEnd() != null && !form.getDateEnd().isEmpty())
 				end = DateUtil.parseDate(form.getDateEnd());
 		} catch (ParseException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		
+
 		Order order = this.orderDao.get(id);
-		if (order == null) throw new ServiceException("该订单不存在");
+		if (order == null)
+			throw new ServiceException("该订单不存在");
 		Worker w = null;
 		if (workerId != null) {
 			w = this.workerDao.get(workerId);
 		}
 		OrderModel orderModel = new OrderModel(order, w, begin, end);
-		//填充每个工序组的最早开始时间和最迟完成时间
+		// 填充每个工序组的最早开始时间和最迟完成时间
 		List<OrderProcessModel> ops = orderModel.getOrderProcesses();
 		for (OrderProcessModel op : ops) {
 			String groupName = op.getGroupName() + "";
-			Calendar opbegin = this.srService.getEarlistBeginDateTime(groupName, id);
+			Calendar opbegin = this.srService.getEarlistBeginDateTime(
+					groupName, id);
 			op.setBeginDate(DateUtil.getDate(opbegin, "yyyy-MM-dd"));
 			Calendar opend = this.srService.getLastEndDateTime(groupName, id);
 			op.setEndDate(DateUtil.getDate(opend, "yyyy-MM-dd"));
 		}
-		
+
 		// String productCode = order.getProductCode();
 		// PtProductCode model = new PtProductCode(productCode);
 		// PtProductCode ptProductCode = this.ptProductCodeService.find(model);
 		Map<String, Object> result = new HashMap<String, Object>();
 		result.put("order", JSON.toJSONString(orderModel));
-		
-		//获取该订单所有的装配报工详情
+
+		// 获取该订单所有的装配报工详情
 		Set<OrderProcess> opps = order.getOps();
 		List<ProduceAssembingModel> pams = new ArrayList<ProduceAssembingModel>();
 		for (OrderProcess op : opps) {
 			Set<ProduceAssembling> pas = op.getPrs();
 			for (ProduceAssembling pa : pas) {
-				if (workerId != null && !pa.getWorker().getId().equals(workerId)) {
+				if (workerId != null
+						&& !pa.getWorker().getId().equals(workerId)) {
 					continue;
 				}
 				if (end != null && pa.getUdate().after(end)) {
-					//如果是报工时间之后的，忽略该报工
+					// 如果是报工时间之后的，忽略该报工
 					continue;
 				}
 				if (begin != null && pa.getUdate().before(begin)) {
-					//如果报工时间是查询时间之前的，忽略该报工
+					// 如果报工时间是查询时间之前的，忽略该报工
 					continue;
 				}
 				pams.add(new ProduceAssembingModel(pa));
 			}
 		}
 		result.put("zhuangpei", JSON.toJSONString(pams));
-		
-		//获取该订单的试验报工详情
+
+		// 获取该订单的试验报工详情
 		List<ProduceTestModel> ptms = new ArrayList<ProduceTestModel>();
 		Set<ProduceTest> pts = order.getProduceTest();
 		for (ProduceTest pt : pts) {
@@ -855,17 +911,17 @@ public class ReportServiceImpl implements ReportService {
 				continue;
 			}
 			if (end != null && pt.getReportDate().after(end)) {
-				//如果是报工时间之后的，忽略该报工
+				// 如果是报工时间之后的，忽略该报工
 				continue;
 			}
 			if (begin != null && pt.getReportDate().before(begin)) {
-				//如果报工时间是查询时间之前的，忽略该报工
+				// 如果报工时间是查询时间之前的，忽略该报工
 				continue;
 			}
 			ptms.add(new ProduceTestModel(pt));
 		}
 		result.put("shiyan", JSON.toJSONString(ptms));
-		//典试报工
+		// 典试报工
 		List<ProduceDianshiModel> pdms = new ArrayList<ProduceDianshiModel>();
 		Set<ProduceDianshi> pds = order.getProduceDianshi();
 		for (ProduceDianshi pd : pds) {
@@ -873,17 +929,17 @@ public class ReportServiceImpl implements ReportService {
 				continue;
 			}
 			if (end != null && pd.getReportDate().after(end)) {
-				//如果是报工时间之后的，忽略该报工
+				// 如果是报工时间之后的，忽略该报工
 				continue;
 			}
 			if (begin != null && pd.getReportDate().before(begin)) {
-				//如果报工时间是查询时间之前的，忽略该报工
+				// 如果报工时间是查询时间之前的，忽略该报工
 				continue;
 			}
 			pdms.add(new ProduceDianshiModel(pd));
 		}
 		result.put("dianshi", JSON.toJSONString(pdms));
-		//其他报工
+		// 其他报工
 		List<ProduceOtherModel> poms = new ArrayList<ProduceOtherModel>();
 		Set<ProduceOther> pos = order.getProduceother();
 		for (ProduceOther po : pos) {
@@ -891,11 +947,11 @@ public class ReportServiceImpl implements ReportService {
 				continue;
 			}
 			if (end != null && po.getReportDate().after(end)) {
-				//如果是报工时间之后的，忽略该报工
+				// 如果是报工时间之后的，忽略该报工
 				continue;
 			}
 			if (begin != null && po.getReportDate().before(begin)) {
-				//如果报工时间是查询时间之前的，忽略该报工
+				// 如果报工时间是查询时间之前的，忽略该报工
 				continue;
 			}
 			poms.add(new ProduceOtherModel(po));
@@ -904,6 +960,32 @@ public class ReportServiceImpl implements ReportService {
 		// result.put("ptid", ptProductCode.getPt().getId());
 		result.put("ptid", -1);
 		return result;
+	}
+
+	@Override
+	public GridModel<ProduceOtherModel> listProduceOther(
+			ProduceOtherSearchForm form) throws ServiceException {
+		ProduceOther model = new ProduceOther();
+		if (form.getOrderNo() != null && !form.getOrderNo().isEmpty()) {
+			Order order = new Order();
+			order.setNo(form.getOrderNo());
+			model.setOrder(order);
+		}
+		if (form.getWorkerId() != null) {
+			Worker worker = new Worker(form.getWorkerId());
+			model.setWorker(worker);
+		}
+		GridModel<ProduceOtherModel> grid = new GridModel<ProduceOtherModel>();
+		Integer count = this.poDao.count(model);
+    	List<ProduceOther> items = this.poDao.listAll(model, form.getPage(), form.getLimit());
+		grid.setTotalNum(count);
+		List<ProduceOtherModel> itModel = new ArrayList<ProduceOtherModel>();
+		for (ProduceOther m : items) {
+			itModel.add(new ProduceOtherModel(m));
+		}
+		grid.setItems(itModel);
+		return grid;
+
 	}
 
 }

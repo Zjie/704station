@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import cn.edu.ustb.sem.account.entity.User;
@@ -106,7 +107,10 @@ public class DispatchServiceImpl implements DispatchService {
 		ph.setPrintDate(Calendar.getInstance());
 		ph.setOrder(exist.getOrder());
 		ph.setGup(exist.getGup());
-		ph.setPrinter(exist.getWorker());
+		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
+		User u = v.getUser();
+		
+		ph.setPrinter(u.getWorker());
 		phDao.save(ph);
 		return new DispatchResultModel(exist);
 	}

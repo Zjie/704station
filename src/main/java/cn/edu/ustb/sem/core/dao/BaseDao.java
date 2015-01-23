@@ -70,4 +70,6 @@ public interface BaseDao<M extends java.io.Serializable, PK extends java.io.Seri
 	public int execute(String hql, final Object... params);
 	
 	public Session getSession();
+	
+	public int count(M model);
 }

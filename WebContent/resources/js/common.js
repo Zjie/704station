@@ -409,6 +409,7 @@ Ext.define('produceOther', {
         {name : 'content', type : 'string'},
         {name : 'udate', type : 'string'},
         {name : 'worker', type : 'string'},
+        {name : 'orderNo', type : 'string'},
     ],
     idProperty: 'id'
 });

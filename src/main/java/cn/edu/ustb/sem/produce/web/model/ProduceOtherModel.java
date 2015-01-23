@@ -9,12 +9,15 @@ public class ProduceOtherModel {
 	private String worker;
 	private String udate;
 	private Byte status;
+	//订单编号
+	private String orderNo;
 	public ProduceOtherModel() {}
 	public ProduceOtherModel(ProduceOther pt) {
 		this.id = pt.getId();
 		this.content = pt.getContent();
 		this.worker = pt.getWorker().getRealName();
 		this.udate = DateUtil.getDateTime(pt.getReportDate());
+		this.orderNo = pt.getOrder().getNo();
 	}
 	public Integer getId() {
 		return id;
@@ -45,6 +48,12 @@ public class ProduceOtherModel {
 	}
 	public void setStatus(Byte status) {
 		this.status = status;
+	}
+	public String getOrderNo() {
+		return orderNo;
+	}
+	public void setOrderNo(String orderNo) {
+		this.orderNo = orderNo;
 	}
 	
 }

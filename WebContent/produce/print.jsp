@@ -49,11 +49,13 @@
             <tr>
                 <td>序号</td>
                 <td>工作内容</td>
+                <td>备注</td>
                 <td>操作单元</td>
             </tr>
             <tr>
                 <td>#</td>
                 <td>工序组${drm.gup.processGroup}</td>
+                <td>${drm.gup.remark}</td>
                 <td>${drm.gup.unit}</td>
             </tr>
         </table>

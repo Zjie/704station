@@ -18,8 +18,11 @@ import cn.edu.ustb.sem.order.entity.Order;
 import cn.edu.ustb.sem.order.service.OrderService;
 import cn.edu.ustb.sem.order.web.model.OrderModel;
 import cn.edu.ustb.sem.order.web.model.OrderSearchForm;
+import cn.edu.ustb.sem.order.web.model.ProduceOtherSearchForm;
 import cn.edu.ustb.sem.produce.service.ReportService;
+import cn.edu.ustb.sem.produce.web.model.ProduceOtherModel;
 import cn.edu.ustb.sem.produce.web.model.TgSearchForm;
+import cn.edu.ustb.sem.workerMg.service.WorkerService;
 @Controller
 @Scope("prototype")
 @RequestMapping("/order")
@@ -28,6 +31,8 @@ public class OrderController extends BaseController {
 	ReportService reportService;
 	@Autowired
 	private OrderService orderService;
+	@Autowired
+	private WorkerService workerService;
 	@RequestMapping(value = "/saveOrUpdate", method = RequestMethod.POST)
 	@ResponseBody
 	public Map<String, Object> saveOrUpdate(OrderModel order) {
@@ -108,6 +113,29 @@ public class OrderController extends BaseController {
 		try {
 			return getSuccessJsonResult("data", this.reportService.getReportByDate(begin, end));
 		} catch (ServiceException e) {
+			logger.warn(e + "");
+			return getErrorJsonResult(e.getMessage(), null);
+		}
+	}
+	@RequestMapping(value = "/report/zhijilist", method = {RequestMethod.POST, RequestMethod.GET})
+	@ResponseBody
+	public Map<String, Object> zhijilist(ProduceOtherSearchForm form) {
+		try {
+			GridModel<ProduceOtherModel> data = reportService.listProduceOther(form);
+			result.put("data", data);
+			return getSuccessJsonResult("", result);
+		} catch (ServiceException e) {
+			logger.warn(e + "");
+			return getErrorJsonResult(e.getMessage(), null);
+		}
+	}
+	@RequestMapping(value = "/report/listWorker",method = {RequestMethod.POST, RequestMethod.GET})
+	@ResponseBody
+	public Map<String, Object> list(){
+		try{
+			result.put("data", workerService.listAllModel());
+			return getSuccessJsonResult("", result);
+		}catch(ServiceException e){
 			logger.warn(e + "");
 			return getErrorJsonResult(e.getMessage(), null);
 		}

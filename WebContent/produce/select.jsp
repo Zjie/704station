@@ -47,6 +47,7 @@ body {text-align:center;}
                 <td>序号</td>
                 <td>工作内容</td>
                 <td>操作单元</td>
+                <td>备注</td>
                 <td>操作</td>
             </tr>
             <c:forEach var="disRes" items="${drm}" varStatus="status">
@@ -54,6 +55,11 @@ body {text-align:center;}
                 <td>${status.index+1}</td>
                 <td>工序组${disRes.gup.processGroup}</td>
                 <td>${disRes.gup.unit}</td>
+                <td>${disRes.gup.remark}</td>
+                <td>
+                    <input type="button" onclick="print('${disRes.id}')" value="打印">
+                </td>
+                <!--
                 <td>
                     <c:if test="${disRes.status==1}">
                         <input type="button" onclick="print('${disRes.id}')" value="打印">
@@ -62,6 +68,7 @@ body {text-align:center;}
                         已打印
                     </c:if>
                 </td>
+                -->
             </tr>
             </c:forEach>
         </table>

@@ -1,6 +1,8 @@
 package cn.edu.ustb.sem.workerMg.service.impl;
 
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -76,5 +78,15 @@ public class WorkerServiceImpl extends BaseServiceImpl<Worker, WorkerModel, Inte
 		w.setIsFreezed(Worker.IS_FREEZED);
 		this.workerDao.update(w);
 	}
+	@Override
+	public List<WorkerModel> listAllModel() throws ServiceException {
+		List<Worker> res = this.workerDao.listAll();
+		List<WorkerModel> models = new ArrayList<WorkerModel>();
+		for (Worker w : res) {
+			models.add(new WorkerModel(w));
+		}
+		return models;
+	}
+	
 
 }

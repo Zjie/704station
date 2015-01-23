@@ -7,6 +7,7 @@ import cn.edu.ustb.sem.core.exception.ServiceException;
 import cn.edu.ustb.sem.core.web.model.GridModel;
 import cn.edu.ustb.sem.kpi.web.model.WorkerKpiSearchForm;
 import cn.edu.ustb.sem.order.web.model.OrderModel;
+import cn.edu.ustb.sem.order.web.model.ProduceOtherSearchForm;
 import cn.edu.ustb.sem.produce.web.model.ProduceAssembingModel;
 import cn.edu.ustb.sem.produce.web.model.ProduceDianshiModel;
 import cn.edu.ustb.sem.produce.web.model.ProduceOtherModel;
@@ -78,4 +79,6 @@ public interface ReportService {
 	
 	//查看一个订单的报工情况
 	public GridModel<OrderModel> getOrder(Integer id) throws ServiceException;
+	
+	public GridModel<ProduceOtherModel> listProduceOther(ProduceOtherSearchForm form) throws ServiceException;
 }

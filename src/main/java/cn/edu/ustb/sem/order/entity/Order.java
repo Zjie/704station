@@ -176,8 +176,8 @@ public class Order implements Serializable {
 	private String certificateDate;
 	
 	//订单编号，唯一索引
-	@Column(name="order_no", nullable = false)
-	private String orderNo;
+//	@Column(name="order_no", nullable = false)
+//	private String orderNo;
 	
 	
 	//物料关系
@@ -342,13 +342,6 @@ public class Order implements Serializable {
 		this.oms = oms;
 	}
 
-	public String getOrderNo() {
-		return orderNo;
-	}
-
-	public void setOrderNo(String orderNo) {
-		this.orderNo = orderNo;
-	}
 
 	public String getNo() {
 		return no;
