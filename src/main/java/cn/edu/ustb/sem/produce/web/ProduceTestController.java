@@ -46,9 +46,9 @@ public class ProduceTestController extends BaseController {
 	//确认一个实验报工已完成
 	@RequestMapping(value="confirm")
 	@ResponseBody
-	public Map<String, Object> confirm(Integer ptId) {
+	public Map<String, Object> confirm(Integer ptId, String reportDate) {
 		try {
-			this.reportService.confirmProduceTest(ptId);
+			this.reportService.confirmProduceTest(ptId, reportDate);
 			return getSuccessJsonResult("", null);
 		} catch (ServiceException e) {
 			logger.warn(e + "");

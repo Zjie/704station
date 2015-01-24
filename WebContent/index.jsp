@@ -34,7 +34,7 @@
     <script type="text/javascript" src="extjs/ext-all-debug.js"></script>
     <script type="text/javascript" src="extjs/ext-lang-zh_CN.js"></script>
     <link rel="stylesheet" type="text/css" href="extjs/resources/css/ext-all.css" />
-
+    <script language="javascript" type="text/javascript" src="My97DatePicker/WdatePicker.js"></script>
     <script type="text/javascript" src="resources/js/jquery-2.0.3.js"></script>
     <script type="text/javascript" src="resources/js/common.js"></script>
     <script type="text/javascript">

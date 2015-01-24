@@ -45,9 +45,9 @@ public class ProduceDianshiController extends BaseController {
 	//确认一个典试报工已完成
 	@RequestMapping(value="confirm")
 	@ResponseBody
-	public Map<String, Object> confirm(Integer pdId) {
+	public Map<String, Object> confirm(Integer pdId, String reportDate) {
 		try {
-			this.reportService.confirmProduceDianshi(pdId);
+			this.reportService.confirmProduceDianshi(pdId, reportDate);
 			return getSuccessJsonResult("", null);
 		} catch (ServiceException e) {
 			logger.warn(e + "");

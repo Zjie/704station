@@ -5,6 +5,7 @@
     <link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
     <script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
     <script type="text/javascript" src="../../resources/js/common.js"></script>
+    <script language="javascript" type="text/javascript" src="../../My97DatePicker/WdatePicker.js"></script>
 </head>
 <body style="padding:10px">
 	<div id="basicInfo"></div>
@@ -19,7 +20,7 @@ Ext.onReady(function() {
 	orderPanel = new Ext.form.FormPanel({
 		renderTo: 'basicInfo',
 		border: 1,
-		//id: 'orderPanel',
+		id: 'orderForm',
 		items : [{
 			layout: 'form',
 			items: [
@@ -66,6 +67,27 @@ Ext.onReady(function() {
 			            fieldLabel: '产品批次及编号',
 			            name: 'productBatchId'
 					}]
+				},{
+					layout: 'column',
+					border: 0,
+					items: [{
+	                    xtype: 'textfield',
+	                    labelAlign: "right",
+	                    fieldLabel: '上报时间',
+	                    name: 'reportDate',
+	                    id: 'reportDate',
+	                    listeners: {
+	                        render: function(p) {
+	                            p.getEl().on('click', function() {
+	                                WdatePicker({
+	                                    el: 'reportDate-inputEl',
+	                                    dateFmt: 'yyyy-MM-dd'
+	                                });
+
+	                            });
+	                        }
+	                    }
+	                }]
 				}
 			]
 		}]
@@ -163,10 +185,11 @@ function confirmPd() {
 	var store = gridPanel.getStore();
 	var record = gridPanel.getSelectionModel().getSelection();
 	var pdId = record[0].data.id;
-
+	var values = Ext.getCmp('orderForm').getValues();
+	var reportDate = values['reportDate'];
 	Ext.Ajax.request({
 	    url: 'confirm.do',
-	    params: {'pdId': pdId},
+	    params: {'pdId': pdId, 'reportDate':reportDate},
 	    success: function(response) {
 	    	if (response.status = 200) {
 	    		var result = eval('(' + response.responseText + ')');

@@ -48,31 +48,37 @@ public class ProcessServiceImpl extends
 			throws ServiceException {
 		String hql = "from " + PProcess.class.getSimpleName()
 				+ " p where 1 = 1";
+		String countHql = "select count(*) from "+ PProcess.class.getSimpleName()
+				+ " p where 1 = 1";
 		List<Object> params = new ArrayList<Object>();
 		String content = form.getContent();
 		String phase = form.getPhase();
 		int groupName = form.getGroupName();
 		if (content != null && !content.isEmpty()) {
 			hql += " and p.content like ?";
+			countHql += " and p.content like ?";
 			params.add("%" + content + "%");
 		}
 		if (phase != null && !phase.isEmpty()) {
 			hql += " and p.phase = ?";
+			countHql += " and p.phase = ?";
 			params.add(phase);
 		}
 		if (groupName > 0) {
 			hql += " and p.group = ?";
+			countHql += " and p.group = ?";
 			params.add(groupName);
 		}
 		List<PProcess> processes = this.baseDao.list(hql, form.getPage(),
 				form.getLimit(), params.toArray());
-
+		int pageCount = this.baseDao.count(countHql, params.toArray());
 		GridModel<ProcessModel> grid = new GridModel<ProcessModel>();
 		List<ProcessModel> itModel = new ArrayList<ProcessModel>();
 		for (PProcess m : processes) {
 			itModel.add(helper.transfer(m));
 		}
 		grid.setItems(itModel);
+		grid.setTotalNum(pageCount);
 		return grid;
 	}
 

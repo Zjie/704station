@@ -136,7 +136,7 @@ function initial() {
 	if (ptid != null) {
 		Ext.Ajax.request({
 		    url: 'list.do',
-		    params: {'id': ptid},
+		    params: {'ptid': ptid},
 		    success: function(response){
 		    	if (response.status = 200) {
 		    		var result = eval('(' + response.responseText + ')');

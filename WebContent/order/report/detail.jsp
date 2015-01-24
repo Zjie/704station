@@ -225,7 +225,7 @@ Ext.onReady(function() {
 	var ptPanel = Ext.create('Ext.grid.Panel', {
 	    margin: '0 0 10 0',
 	    disableSelection: false,
-	    title: '实验报工详情',
+	    title: '试验报工详情',
 	    loadMask: true,
 	    id: 'ptPanel',
 	    store: ptStore,

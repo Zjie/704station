@@ -23,12 +23,11 @@ public class OrderDaoImpl extends BaseDaoImpl<Order, Integer> implements OrderDa
 				+ "or o.status = " + OrderStatus.forced;
 		return list(hql, pn, pageSize);
 	}
-	
+	/**
+	 * 列出那些可以强制排产的订单，只要未进入排产状态的和不在自动排产列表中得
+	 */
 	public List<Order> listForceScheduleOrder() {
-		String hql = "from " + this.tableName + " o where (o.status = " + OrderStatus.initial + " "
-				+ "or o.processIsCheck = " + Order.PROCESS_IS_NOT_CHECKED + " "
-				+ "or o.materialIsChecked = " + Order.PROCESS_IS_NOT_CHECKED + ") ";
-				//+ "or o.status = " + OrderStatus.forced;
+		String hql = "from " + this.tableName + " o where o.status = " + OrderStatus.initial;
 		return list(hql, -1, -1);
 	}
 	

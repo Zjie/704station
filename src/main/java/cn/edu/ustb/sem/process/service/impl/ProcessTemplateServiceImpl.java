@@ -163,7 +163,7 @@ public class ProcessTemplateServiceImpl extends BaseServiceImpl<ProcessTemplate,
 			cell = row.getCell(9);
 			if (cell != null) {
 				String part = cell.getStringCellValue();
-				if (part.toLowerCase().equals("3e")) {
+				if (part.toLowerCase().trim().equals("3s/3e")) {
 					hitEnd = true;
 				}
 			}
@@ -323,7 +323,11 @@ public class ProcessTemplateServiceImpl extends BaseServiceImpl<ProcessTemplate,
 	public GridModel<ProcessTemplateModel> list(ProcessTemplateSearchForm form,
 			ItemModelHelper<ProcessTemplate, ProcessTemplateModel> helper)
 			throws ServiceException {
-		return this.list(null, form.getPage(), form.getLimit(), helper);
+		ProcessTemplate model = new ProcessTemplate();
+		if (form.getPtid() != null) {
+			model.setId(form.getPtid());
+		}
+		return this.list(model, form.getPage(), form.getLimit(), helper);
 	}
 	@Override
 	public void saveOrUpdate(ProcessTemplateModel model)

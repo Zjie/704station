@@ -94,9 +94,14 @@ Ext.onReady(function() {
 	        dataIndex: 'no',
 	        //sortable: false
 	    },{
-	    	text: "是否完成配套",
-	    	dataIndex: 'isAssigned',
-	    	sortable:false
+	    	text: "配套状态",
+	    	width: 180,
+	        xtype: "templatecolumn",
+	    	tpl :new Ext.XTemplate(
+	        	'<tpl if="assignStatus==0">未开始</tpl>',
+	        	'<tpl if="assignStatus==1">配套中</tpl>',
+	        	'<tpl if="assignStatus==2">配套完成</tpl>'
+			)
 	    },{
 	        text: "课题编号",
 	        dataIndex: 'project',

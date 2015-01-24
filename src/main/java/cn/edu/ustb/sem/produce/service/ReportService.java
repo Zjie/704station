@@ -59,7 +59,7 @@ public interface ReportService {
 	//获取一个订单的某个员工的全部实验报工情况
 	public List<ProduceTestModel> getTestReportByWorker(Integer orderId) throws ServiceException;
 	//确认一个实验报工
-	public void confirmProduceTest(Integer id) throws ServiceException;
+	public void confirmProduceTest(Integer id, String reportDate) throws ServiceException;
 	
 	
 	//报在典数量
@@ -67,7 +67,7 @@ public interface ReportService {
 	//获取一个订单某个工人全部的典试报工情况
 	public List<ProduceDianshiModel> getDianshiReportByWorker(Integer orderId) throws ServiceException;
 	//确认一个典试报工
-	public void confirmProduceDianshi(Integer id) throws ServiceException;
+	public void confirmProduceDianshi(Integer id, String reportDate) throws ServiceException;
 	
 	//其他报工
 	public void reportOther(Integer orderId, String content, String reportDate) throws ServiceException;

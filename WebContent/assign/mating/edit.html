@@ -165,6 +165,14 @@ Ext.onReady(function() {
 	    	xtype: "templatecolumn",
 	    	width:110,
 	    	tpl: "<input type='text' value='还可配套{diffNum}个' id='assign{id}' style='width:150px; color:#999999' onfocus='initText(this)' onkeyup='check(this,{diffNum})' onblur='setText(this,{diffNum})'></input>"
+	    },{
+	    	text: "当前状态",
+	        xtype: "templatecolumn",
+	    	tpl :new Ext.XTemplate(
+	        	'<tpl if="totalAssign==0&amp;&amp;totalAssign!=allNum">缺数</tpl>',
+	        	'<tpl if="totalAssign&lt;allNum&amp;&amp;totalAssign&gt;0">缺项</tpl>',
+	        	'<tpl if="totalAssign==allNum">齐备</tpl>'
+			)
 	    }]
 	});
 	initial();

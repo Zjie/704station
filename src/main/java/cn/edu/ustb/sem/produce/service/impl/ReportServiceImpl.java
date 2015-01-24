@@ -569,14 +569,22 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public void confirmProduceTest(Integer id) throws ServiceException {
+	public void confirmProduceTest(Integer id, String reportDate) throws ServiceException {
 		if (id == null)
 			throw new ServiceException("请选择一个正确的试验报工");
 		ProduceTest pt = this.ptDao.get(id);
 		if (pt == null)
 			throw new ServiceException("请选择一个正确的试验报工");
+		Calendar udate = Calendar.getInstance();
+		if (reportDate != null && !reportDate.isEmpty()) {
+			try {
+				udate = DateUtil.parseDate(reportDate);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
 		pt.setStatus(ProduceTest.FINISHED);
-		pt.setConfirmDate(Calendar.getInstance());
+		pt.setConfirmDate(udate);
 		this.ptDao.update(pt);
 	}
 
@@ -638,14 +646,22 @@ public class ReportServiceImpl implements ReportService {
 	}
 
 	@Override
-	public void confirmProduceDianshi(Integer id) throws ServiceException {
+	public void confirmProduceDianshi(Integer id, String reportDate) throws ServiceException {
 		if (id == null)
 			throw new ServiceException("请选择一个正确的典试报工");
 		ProduceDianshi pt = this.pdDao.get(id);
 		if (pt == null)
 			throw new ServiceException("请选择一个正确的典试报工");
+		Calendar udate = Calendar.getInstance();
+		if (reportDate != null && !reportDate.isEmpty()) {
+			try {
+				udate = DateUtil.parseDate(reportDate);
+			} catch (ParseException e) {
+				e.printStackTrace();
+			}
+		}
 		pt.setStatus(ProduceTest.FINISHED);
-		pt.setConfirmDate(Calendar.getInstance());
+		pt.setConfirmDate(udate);
 		this.pdDao.update(pt);
 	}
 

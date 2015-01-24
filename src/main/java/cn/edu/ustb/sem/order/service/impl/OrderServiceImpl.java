@@ -133,6 +133,13 @@ public class OrderServiceImpl extends
 					exist.setCertificateDate(order.getCertificateDate());
 					exist.setStockInDate(order.getStockInDate());
 					exist.setRemark(order.getRemark());
+					//新增的一些字段 2015/01/20
+					exist.setFactoryRemark(order.getFactoryRemark());
+					exist.setGongyiyuan(order.getGongyiyuan());
+					exist.setPlanAdjustNum(order.getPlanAdjustNum());
+					exist.setLastAdjustDate(order.getLastAdjustDate());
+					exist.setProductType(order.getProductType());
+					
 					orderDao.update(exist);
 					order = exist;
 					saveOrUpdate = false;
@@ -295,10 +302,10 @@ public class OrderServiceImpl extends
 //			flag &= false;
 //		}
 		// 保持序号不能在一个excel文件内不重复
-		if (excelExistOrder.containsKey(o.getNo())) {
-			ExcelUtil.createCommentForCell(cell, "订单序号不能和已有的重复，请用别的序号");
-			flag &= false;
-		}
+//		if (excelExistOrder.containsKey(o.getNo())) {
+//			ExcelUtil.createCommentForCell(cell, "订单序号不能和已有的重复，请用别的序号");
+//			flag &= false;
+//		}
 		// 课题编号
 		cell = row.getCell(1);
 		if (cell != null) {
