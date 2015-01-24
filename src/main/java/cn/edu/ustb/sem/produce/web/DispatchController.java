@@ -29,6 +29,7 @@ import cn.edu.ustb.sem.order.service.OrderService;
 import cn.edu.ustb.sem.produce.service.DispatchService;
 import cn.edu.ustb.sem.produce.service.ReportService;
 import cn.edu.ustb.sem.produce.web.model.DispatchResultModel;
+import cn.edu.ustb.sem.schedule.entity.Worker;
 
 import com.sun.image.codec.jpeg.JPEGCodec;
 import com.sun.image.codec.jpeg.JPEGEncodeParam;
@@ -80,11 +81,13 @@ public class DispatchController extends BaseController {
 	@RequestMapping(value = "/print")
 	public ModelAndView print(Integer srid) {
 		try {
+			Visitor v = getVisitor();
+			Worker w = v.getUser().getWorker();
 			DispatchResultModel drm = dispatchService.printDispatchResultModel(srid, this.getVisitor().getUid());
 			result.put("order", drm.order);
 			result.put("drm", drm);
 			result.put("printDate", DateUtil.getDate(Calendar.getInstance(), "yyyy-MM-dd"));
-			result.put("worker", dispatchService.getWorker(getVisitor()).getRealName());
+			result.put("worker", w);
 			return new ModelAndView("/produce/print", result);
 		} catch (ServiceException e) {
 			logger.warn(e + "");

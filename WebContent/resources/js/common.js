@@ -414,6 +414,20 @@ Ext.define('produceOther', {
     idProperty: 'id'
 });
 
+//领料历史
+Ext.define('dispatchMaterial', {
+    extend: 'Ext.data.Model',
+    fields: [
+        {name: 'id', type: 'int'},
+        {name: 'orderId', type: 'int'},
+        {name: 'no', type: 'string'},
+        {name: 'workerName', type: 'string'},
+        {name: 'remark', type: 'string'},
+        {name: 'udate', type: 'string'},
+        {name: 'updater', type: 'string'},
+    ]
+})
+
 //通用函数
 /**
  * 获取url中的参数

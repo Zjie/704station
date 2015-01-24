@@ -39,11 +39,8 @@ public class DispatchServiceImpl implements DispatchService {
 	@Override
 	public List<DispatchResultModel> getCurrentDispatchResult(Visitor v)
 			throws ServiceException {
-		Worker model = new Worker();
-		User u = new User();
-		u.setId(v.getUid());
-		model.setUser(u);
-		Worker w = workerDao.find(model);
+		User u = v.getUser();
+		Worker w = u.getWorker();
 		//查找属于这个单元下的排产计划，并且排产结果是调度员确认过的
 		ScheduleResult sr = new ScheduleResult();
 		//只选出用户确认的排产结果
@@ -66,6 +63,7 @@ public class DispatchServiceImpl implements DispatchService {
 		}
 		//加上生产单元调整的订单
 		DispatchUnit duModel = new DispatchUnit();
+		Worker model = new Worker();
 		model.setUnit(w.getUnit());
 		List<DispatchUnit> dus = this.duDao.listAll(duModel, -1, -1);
 		for (DispatchUnit du : dus) {
@@ -102,7 +100,7 @@ public class DispatchServiceImpl implements DispatchService {
 			throws ServiceException {
 		//更新这个工序组的状态
 		ScheduleResult exist = srDao.get(srid);
-		srDao.updateSchedultResultStatus(exist);
+//		srDao.updateSchedultResultStatus(exist);
 		PrintHistory ph = new PrintHistory();
 		ph.setPrintDate(Calendar.getInstance());
 		ph.setOrder(exist.getOrder());

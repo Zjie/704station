@@ -9,9 +9,10 @@
 </head>
 <body>
 	<div style="margin:50px;">
-		<input id="code" style="width:200px"/>
-		<button onclick="doDispatch()">确定领料</button>
-        <br />
+		<input id="code" style="width:200px"/><br/>
+        备注:<br/>
+        <textarea id='remark' rows=5 cols=50></textarea><br/>
+		<button onclick="doDispatch()">确定领料</button><br />
         <span style="color:red;font-size:12px;">如果无法扫出条形码，请手动输入条形码下面的字符串</span>
 	</div>
 <script type="text/javascript">
@@ -24,7 +25,7 @@ function doDispatch() {
     $.ajax({
         type: "POST",
         url: "doDispatch.do",
-        data: "code=" + code,
+        data: "code=" + code + "&remark=" + $("#remark").val(),
         success: function(response) {
             if (response.success) {
                 Ext.Msg.alert('系统提示', '领料成功！', function(buttonId, text, opt) {

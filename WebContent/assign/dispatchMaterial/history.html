@@ -1,0 +1,154 @@
+<html>
+<head>
+	<title>订单列表</title>
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+	<script type="text/javascript" src="../../extjs/ext-all-debug.js"></script>
+	<link rel="stylesheet" type="text/css" href="../../extjs/resources/css/ext-all.css" />
+	<script type="text/javascript" src="../../resources/js/jquery-2.0.3.js"></script>
+	<script type="text/javascript" src="../../resources/js/common.js"></script>
+</head>
+<body>
+<script type="text/javascript">
+
+Ext.onReady(function() {
+	var workerStore = Ext.create('Ext.data.Store', {
+	    model: 'worker',
+	    autoLoad: true,
+	    id: 'workerStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : 'listWorker.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data', 
+	        }
+		}
+	});
+	var searchForm = new Ext.form.FormPanel(
+	{
+		region: 'north',
+		id : 'searchForm',
+		border: 0,
+		items : [{
+			layout: 'form',
+			items: [
+				{
+					layout: 'column',
+					border: 0,
+					items: [{
+						xtype: 'textfield',
+						labelAlign: "right",
+			            fieldLabel: '序号',
+			            name: 'no'
+					},{
+						layout: 'column',
+						border: 0,
+						items: [{
+							xtype: 'combo',
+							labelAlign: "right",
+				            fieldLabel: '工人',
+				            name: 'workerId',//停工的工序组id，对应s_scheduled_result表
+				            store: workerStore,
+				            //queryMode: 'local',
+						    displayField: 'realName',
+						    valueField: 'id',
+						}]
+					},]
+				}
+			]
+		}],
+		buttons : [{
+			text : '查询',
+			handler : function() {
+				var form = this.up('form').getForm();
+				var mtStore = Ext.getStore('dispatchMaterialStore');
+				mtStore.proxy['extraParams'] = form.getValues();
+				mtStore.load();
+			}
+		}]
+	});
+
+	var store = Ext.create('Ext.data.Store', {
+	    pageSize: 20,
+	    model: 'dispatchMaterial',
+	    autoLoad: true,
+	    id: 'dispatchMaterialStore',
+	    proxy: {  
+	        type: 'ajax',
+	        url : 'list.do',
+	        actionMethods: {
+	            create: "POST", read: "POST", update: "POST", destroy: "POST"
+	        },
+	        reader: {
+	            //数据格式为json
+	            type: 'json',
+	            root: 'data.items',
+	            //获取数据总数  
+	            totalProperty: 'data.totalNum'  
+	        }
+		}
+	});
+	var gridPanel = Ext.create('Ext.grid.Panel', {
+	    title: '领料列表',
+	    region: 'center',
+	    disableSelection: false,
+	    loadMask: true,
+	    store: store,
+	    viewConfig: {
+	        id: 'orderVidewConfig',
+	        trackOver: false,
+	        stripeRows: false
+	    },
+	    columns:[{
+	        hidden: true,
+	        text: "id",
+	        dataIndex: 'id',
+	        //sortable: false
+	    },{
+	        text: "订单编号",
+	        dataIndex: 'no',
+	        //sortable: false
+	    },{
+	        text: "领料人",
+	        dataIndex: 'workerName',
+	        //sortable: false
+	    },{
+	        text: "发料人",
+	        dataIndex: 'updater',
+	        //sortable: false
+	    },{
+	        text: "备注",
+	        dataIndex: 'remark',
+	        //sortable: false
+	    },{
+	        text: "领料日期",
+	        dataIndex: 'udate',
+	        //sortable: false
+	    }],
+	  	//分页功能  
+	    bbar: Ext.create('Ext.PagingToolbar', {   
+			store: store,   
+			displayInfo: true,   
+			displayMsg: '显示 {0} - {1} 条，共 {2} 条',   
+			emptyMsg: "没有数据",
+			beforePageText : "第",
+			afterPageText : "页 共 {0} 页"
+		})
+	});
+
+	var viewport = Ext.create('Ext.Viewport', {
+		id: 'gridPage',
+		layout: 'border',
+		items: [searchForm, gridPanel]
+	});
+
+	
+});
+
+</script>
+</body>
+</html>

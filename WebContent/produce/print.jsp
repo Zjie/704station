@@ -26,7 +26,7 @@
                 <td>产品代号：${order.productCode}</td>
                 <td>
                     <!-- 用订单编号去确定一个订单，而不是订单id -->
-                	<img src="genCode.do?code=${order.no}-${order.productCode}&barType=CODE128&checkCharacter=n&checkCharacterInText=n">
+                	<img src="genCode.do?code=${order.no}-${worker.id}-${order.productCode}&barType=CODE128&checkCharacter=n&checkCharacterInText=n">
                 </td>
             </tr>
             <tr>
@@ -61,7 +61,7 @@
         </table>
         <div style="margin-top:20px">
             <div style="float:left">打印日期：${printDate}</div>
-            <div style="float:left;margin-left:20px;">打印人：${worker}</div>
+            <div style="float:left;margin-left:20px;">打印人：${worker.realName}</div>
         </div>
     </div>
 <script>

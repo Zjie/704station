@@ -21,6 +21,7 @@ import org.hibernate.annotations.NotFoundAction;
 
 import cn.edu.ustb.sem.account.entity.User;
 import cn.edu.ustb.sem.order.entity.Order;
+import cn.edu.ustb.sem.schedule.entity.Worker;
 
 @Entity
 @Table(name="a_dispatch_material")
@@ -47,7 +48,16 @@ public class DispatchMaterial implements Serializable{
 	@NotFound(action=NotFoundAction.IGNORE)
 	@LazyToOne(LazyToOneOption.PROXY)
 	private User updater;
-
+	
+	@Column(name = "remark")
+	private String remark;
+	
+	@ManyToOne
+	@JoinColumn(name="worker_id")
+	@NotFound(action=NotFoundAction.EXCEPTION)
+	@LazyToOne(LazyToOneOption.PROXY)
+	private Worker worker;
+	
 	public Integer getId() {
 		return id;
 	}
@@ -78,6 +88,22 @@ public class DispatchMaterial implements Serializable{
 
 	public void setUpdater(User updater) {
 		this.updater = updater;
+	}
+
+	public String getRemark() {
+		return remark;
+	}
+
+	public void setRemark(String remark) {
+		this.remark = remark;
+	}
+
+	public Worker getWorker() {
+		return worker;
+	}
+
+	public void setWorker(Worker worker) {
+		this.worker = worker;
 	}
 	
 }

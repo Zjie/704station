@@ -31,6 +31,7 @@ import cn.edu.ustb.sem.order.entity.Order;
 import cn.edu.ustb.sem.order.entity.OrderMaterial;
 import cn.edu.ustb.sem.order.entity.OrderStatus;
 import cn.edu.ustb.sem.order.service.OrderService;
+import cn.edu.ustb.sem.schedule.entity.Worker;
 
 @Service("assignService")
 public class AssignServiceImpl extends
@@ -140,29 +141,40 @@ public class AssignServiceImpl extends
 	}
 	/**
 	 * 派工单领料
-	 * @param code ${order.no}-${order.productCode}
+	 * @param code ${order.no}-${workerId}-${order.productCode}
 	 * @throws ServiceException
 	 */
 	@Override
-	public void doDispatch(String code) throws ServiceException {
+	public void doDispatch(String code, String remark) throws ServiceException {
 		Visitor v = (Visitor) SecurityContextHolder.getContext().getAuthentication();
 		String[] data = code.split("-");
+		if (data.length < 2) {
+			throw new ServiceException("派工单条形码有误");
+		}
 		String no = data[0];
-		if (no == null || no.isEmpty()) throw new ServiceException("参数出错");
+		String wid = data[1];
+		if (wid == null || wid.isEmpty()) {
+			throw new ServiceException("派工单条形码有误");
+		}
+		if (no == null || no.isEmpty()) throw new ServiceException("派工单条形码有误");
 		Order orderModel = new Order();
 		orderModel.setNo(no);
 		Order order = this.orderService.find(orderModel);
 		//先查看此订单是否被领料过
-		DispatchMaterial model = new DispatchMaterial();
-		model.setOrder(new Order(order.getId()));
-		DispatchMaterial dm = this.dmDao.find(model);
-		if (dm != null) throw new ServiceException("该订单在" + DateUtil.getDateTime(dm.getUdate()) + "已经被确认领料过");
+		//可以多次领料
+//		DispatchMaterial model = new DispatchMaterial();
+//		model.setOrder(new Order(order.getId()));
+//		DispatchMaterial dm = this.dmDao.find(model);
+//		if (dm != null) throw new ServiceException("该订单在" + DateUtil.getDateTime(dm.getUdate()) + "已经被确认领料过");
 		DispatchMaterial toBeInsert = new DispatchMaterial();
-		toBeInsert.setOrder(new Order(order.getId()));
+		toBeInsert.setOrder(order);
 		toBeInsert.setUdate(Calendar.getInstance());
 		toBeInsert.setUpdater(v.getUser());
+		toBeInsert.setRemark(remark);
+		toBeInsert.setWorker(new Worker(Integer.parseInt(wid)));
 		this.dmDao.save(toBeInsert);
 		//更新order的领料状态
 		order.setIsDispatchMaterial(YesOrNo.YES.getIndex());
 	}
+
 }

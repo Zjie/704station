@@ -20,5 +20,6 @@ public interface AssignService extends BaseService<Assign, AssignModel, Integer>
 	 * @param code ${order.no}-${order.productCode}
 	 * @throws ServiceException
 	 */
-	public void doDispatch(String code) throws ServiceException;
+	public void doDispatch(String code, String remark) throws ServiceException;
+	
 }
