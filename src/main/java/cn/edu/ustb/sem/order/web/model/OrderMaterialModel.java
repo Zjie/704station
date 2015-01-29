@@ -18,19 +18,19 @@ public class OrderMaterialModel {
 	private String specification;
 	private String level;
 	private String uom;
-	private int singleNum;
-	private int bkNum;
+	private double singleNum;
+	private double bkNum;
 	private String type;
 	//添加订单物料配套情况---cwm
 	private List<AssignModel> assigns;
-	private int totalAssign;//已配套数量
-	private int leftAssign;//剩余可配套数量
+	private double totalAssign;//已配套数量
+	private double leftAssign;//剩余可配套数量
 	private String udate;
 	private String updater;
 	//总需求量
-	private int allNum;
+	private double allNum;
 	//差额
-	private int diffNum;
+	private double diffNum;
 	public OrderMaterialModel() {
 	}
 
@@ -69,7 +69,7 @@ public class OrderMaterialModel {
 		this.diffNum = this.allNum - this.totalAssign;
 	}
 
-	public int getBkNum() {
+	public double getBkNum() {
 		return bkNum;
 	}
 
@@ -89,7 +89,7 @@ public class OrderMaterialModel {
 		return orderNo;
 	}
 
-	public int getSingleNum() {
+	public double getSingleNum() {
 		return singleNum;
 	}
 
@@ -153,7 +153,7 @@ public class OrderMaterialModel {
 		this.assigns = assigns;
 	}
 
-	public int getTotalAssign() {
+	public double getTotalAssign() {
 		return totalAssign;
 	}
 
@@ -161,7 +161,7 @@ public class OrderMaterialModel {
 		this.totalAssign = totalAssign;
 	}
 
-	public int getLeftAssign() {
+	public double getLeftAssign() {
 		return leftAssign;
 	}
 
@@ -181,7 +181,7 @@ public class OrderMaterialModel {
 		this.updater = updater;
 	}
 
-	public int getAllNum() {
+	public double getAllNum() {
 		return allNum;
 	}
 
@@ -189,7 +189,7 @@ public class OrderMaterialModel {
 		this.allNum = allNum;
 	}
 
-	public int getDiffNum() {
+	public double getDiffNum() {
 		return diffNum;
 	}
 

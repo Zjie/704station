@@ -257,34 +257,34 @@ public class MaterialTemplateServiceImpl extends
 			cell = row.getCell(6);
 			if (cell != null) {
 				if (cell.getCellType() == Cell.CELL_TYPE_NUMERIC) {
-					material.setSingleNum((int)cell.getNumericCellValue());
+					material.setSingleNum(cell.getNumericCellValue());
 				} else if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
 					String danji = cell.getStringCellValue();
 					try {
-						Integer num = Integer.parseInt(danji);
+						Double num = Double.parseDouble(danji);
 						material.setSingleNum(num);
 					} catch (NumberFormatException e) {
 						//如果无法解析则设为0
-						material.setSingleNum(0);
+						material.setSingleNum(0.0);
 					}
 				} else {
 					//如果为空
-					material.setSingleNum(0);
+					material.setSingleNum(0.0);
 				}
 			} else {
-				material.setSingleNum(0);
+				material.setSingleNum(0.0);
 				rowNullCount++;
 			}
 			//工艺备份数量
 			cell = row.getCell(7);
 			if (cell != null) {
 				if (cell.getCellType() != Cell.CELL_TYPE_NUMERIC) {
-					material.setBackupNum((int)cell.getNumericCellValue());
+					material.setBackupNum(cell.getNumericCellValue());
 				} else {
-					material.setBackupNum(0);
+					material.setBackupNum(0.0);
 				}
 			} else  {
-				material.setBackupNum(0);
+				material.setBackupNum(0.0);
 			}
 			if (rowNullCount >= 4) {
 				break;

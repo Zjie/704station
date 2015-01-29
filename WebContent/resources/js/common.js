@@ -168,15 +168,15 @@ Ext.define('material', {
         {name : 'specification', type : 'string'},//型号规格
         {name : 'level', type : 'string'},//质量等级或标准要求
         {name : 'uom', type : 'string'},//计量单位
-        {name : 'singleNum', type : 'int'},//单机数量
-        {name : 'bkNum', type : 'int'},//工艺备份数量
+        {name : 'singleNum', type : 'float'},//单机数量
+        {name : 'bkNum', type : 'float'},//工艺备份数量
         {name : 'udate', type : 'string'}, // 更新时间
         {name : 'updater', type : 'string'},//更新人
         {name : 'typeValue', type: 'int'},//用于分组使用
-        {name : 'totalAssign', type: 'int'},//已配套数量---cwm
-        {name : 'leftAssign', type: 'int'},//剩余可配套数量---cwm
-        {name : 'allNum', type: 'int'},//总需求量=单机*投产数量
-        {name : 'diffNum', type: 'int'},//差额=总需求量-已配套数量
+        {name : 'totalAssign', type: 'float'},//已配套数量---cwm
+        {name : 'leftAssign', type: 'float'},//剩余可配套数量---cwm
+        {name : 'allNum', type: 'float'},//总需求量=单机*投产数量
+        {name : 'diffNum', type: 'float'},//差额=总需求量-已配套数量
     ],
     idProperty: 'id'
 });
@@ -189,7 +189,7 @@ Ext.define('process', {
         {name:'phase', type:'string'},
         {name:'content', type:'string'},
         {name:'groupName', type:'int'},
-        {name:'measure', type:'int'},
+        {name:'measure', type:'float'},
         {name:'remark', type:'string'},
         {name:'updater', type:'string'},
         {name:'udate', type:'string'},

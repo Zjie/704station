@@ -190,9 +190,9 @@ public class ProcessTemplateServiceImpl extends
 			}
 			// 周期预估可以为空
 			cell = row.getCell(13);
-			int measure = 0;
+			double measure = 0;
 			if (cell != null) {
-				measure = (int) cell.getNumericCellValue();
+				measure = cell.getNumericCellValue();
 			}
 			// 备注，可以为空
 			cell = row.getCell(14);

@@ -17,7 +17,7 @@ public class OrderProcessModel {
 	private String phase;
 	private String content;
 	private int groupName;
-	private int measure;
+	private double measure;
 	private String remark;
 	private int base;
 	private List<ProduceAssembingModel> produceReports;
@@ -113,7 +113,7 @@ public class OrderProcessModel {
 		this.groupName = groupName;
 	}
 
-	public int getMeasure() {
+	public double getMeasure() {
 		return measure;
 	}
 

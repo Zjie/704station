@@ -44,7 +44,7 @@ public class PProcess implements Serializable {
 	@Column(name = "group_name")
 	private Integer group;
 	@Column(name = "measure")
-	private Integer measure;
+	private Double measure;
 	@Column(name = "remark")
 	private String remark;
 	@Column(name = "base")
@@ -98,10 +98,10 @@ public class PProcess implements Serializable {
 	public void setGroup(Integer group) {
 		this.group = group;
 	}
-	public Integer getMeasure() {
+	public Double getMeasure() {
 		return measure;
 	}
-	public void setMeasure(Integer measure) {
+	public void setMeasure(Double measure) {
 		this.measure = measure;
 	}
 	public String getRemark() {

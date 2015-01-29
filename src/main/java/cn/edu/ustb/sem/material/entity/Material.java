@@ -50,10 +50,10 @@ public class Material implements Serializable {
 	private String uom;
 	//单机数量
 	@Column(name = "single_num")
-	private Integer singleNum;
+	private Double singleNum;
 	//工艺备份数量
 	@Column(name = "bk_num")
-	private Integer backupNum;
+	private Double backupNum;
 	//物料种类
 	@Column(name = "type")
 	private String type;
@@ -128,16 +128,16 @@ public class Material implements Serializable {
 	public void setUom(String uom) {
 		this.uom = uom;
 	}
-	public Integer getSingleNum() {
+	public Double getSingleNum() {
 		return singleNum;
 	}
-	public void setSingleNum(Integer singleNum) {
+	public void setSingleNum(Double singleNum) {
 		this.singleNum = singleNum;
 	}
-	public Integer getBackupNum() {
+	public Double getBackupNum() {
 		return backupNum;
 	}
-	public void setBackupNum(Integer backupNum) {
+	public void setBackupNum(Double backupNum) {
 		this.backupNum = backupNum;
 	}
 

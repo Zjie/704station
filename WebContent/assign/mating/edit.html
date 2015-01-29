@@ -169,8 +169,8 @@ Ext.onReady(function() {
 	    	text: "当前状态",
 	        xtype: "templatecolumn",
 	    	tpl :new Ext.XTemplate(
-	        	'<tpl if="totalAssign==0&amp;&amp;totalAssign!=allNum">缺数</tpl>',
-	        	'<tpl if="totalAssign&lt;allNum&amp;&amp;totalAssign&gt;0">缺项</tpl>',
+	        	'<tpl if="totalAssign==0&amp;&amp;totalAssign!=allNum">缺项</tpl>',
+	        	'<tpl if="totalAssign&lt;allNum&amp;&amp;totalAssign&gt;0">缺数</tpl>',
 	        	'<tpl if="totalAssign==allNum">齐备</tpl>'
 			)
 	    }]

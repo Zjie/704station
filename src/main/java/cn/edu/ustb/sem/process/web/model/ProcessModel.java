@@ -8,7 +8,7 @@ public class ProcessModel {
 	private String phase;
 	private String content;
 	private int groupName;
-	private int measure;
+	private double measure;
 	private String remark;
 	private String updater;
 	private String udate;
@@ -51,7 +51,7 @@ public class ProcessModel {
 	public void setGroupName(int groupName) {
 		this.groupName = groupName;
 	}
-	public int getMeasure() {
+	public double getMeasure() {
 		return measure;
 	}
 	public void setMeasure(int measure) {

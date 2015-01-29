@@ -10,8 +10,8 @@ public class MaterialModel {
 	private String specification;
 	private String level;
 	private String uom;
-	private int singleNum;
-	private int bkNum;
+	private double singleNum;
+	private double bkNum;
 	private int mtId;
 	private int no;
 	
@@ -83,13 +83,13 @@ public class MaterialModel {
 	public void setUom(String uom) {
 		this.uom = uom;
 	}
-	public int getSingleNum() {
+	public double getSingleNum() {
 		return singleNum;
 	}
 	public void setSingleNum(int singleNum) {
 		this.singleNum = singleNum;
 	}
-	public int getBkNum() {
+	public double getBkNum() {
 		return bkNum;
 	}
 	public void setBkNum(int bkNum) {
