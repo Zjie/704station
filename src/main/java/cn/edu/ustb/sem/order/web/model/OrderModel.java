@@ -226,9 +226,9 @@ public class OrderModel {
 		this.units = temp;
 		this.infoIsChecked = bo.getProcessIsCheck();
 		this.infoCheckTime = DateUtil.getDateTime(bo.getProcessCheckTime());
-		this.componentCompleteness = DateUtil.getDate(bo.getComponentCompleteness());
+		this.componentCompleteness = bo.getComponentCompleteness();
 		this.materialsCompleteness = DateUtil.getDate(bo.getMaterialsCompleteness());
-		this.materialsQitaoTime = DateUtil.getDate(bo.getMaterialsQitaoTime());
+		this.materialsQitaoTime = bo.getMaterialsQitaoTime();
 		//装配完成数量
 		this.assembledNum = bo.getAssembledNum(w);
 		//装配在制数量

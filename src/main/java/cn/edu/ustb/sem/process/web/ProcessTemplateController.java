@@ -3,13 +3,17 @@ package cn.edu.ustb.sem.process.web;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,12 +58,38 @@ public class ProcessTemplateController extends BaseController {
 		Workbook wk = null;
 		HttpSession session = request.getSession(true);
 		try {
-			session.setAttribute(IS_UPLOAD_BEGIN, true);
-			session.setAttribute(IS_UPLOAD_FINISHED, false);
+//			session.setAttribute(IS_UPLOAD_BEGIN, true);
+//			session.setAttribute(IS_UPLOAD_FINISHED, false);
 			wk = new XSSFWorkbook(file.getInputStream());
-			pts.importExcelFile(wk);
-			session.setAttribute(IS_UPLOAD_BEGIN, false);
-			session.setAttribute(IS_UPLOAD_FINISHED, true);
+			
+//			session.setAttribute(IS_UPLOAD_BEGIN, false);
+//			session.setAttribute(IS_UPLOAD_FINISHED, true);
+			
+			int totalNum = wk.getNumberOfSheets();
+			session.setAttribute(ProcessTemplateController.IMPORT_NUM, totalNum);
+			session.setAttribute(ProcessTemplateController.CUR_NUM, 1);
+			session.setAttribute("processTemplateUploadStatus", "upload end");
+			
+			
+			List<Integer> successPt = new ArrayList<Integer>();
+			// 循环工作表Sheet
+			for (int numSheet = 0; numSheet < totalNum; numSheet++) {
+				session.setAttribute(ProcessTemplateController.CUR_NUM, numSheet + 1);
+				// 对于每个sheet
+				Sheet hssfSheet = wk.getSheetAt(numSheet);
+				if (hssfSheet == null) {
+					continue;
+				}
+				if (pts.saveSheet(hssfSheet)) {
+					successPt.add(numSheet);
+				}
+			}
+			//删除已经保存成功的模板
+			Collections.reverse(successPt);
+			for (Integer s : successPt) {
+				wk.removeSheetAt(s);
+			}
+			
 			if (wk.getNumberOfSheets() > 0) {
 				//如果有保存失败的模板
 				session.setAttribute(ERR_FILE, wk);
@@ -116,10 +146,27 @@ public class ProcessTemplateController extends BaseController {
 			}
 		}
 	}
+	
+	@RequestMapping(value = "/beginUpload")
+	@ResponseBody
+	public String beginUpload(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		session.setAttribute("processTemplateUploadStatus", "begin upload");
+		return "success";
+	}
+	
 	@RequestMapping(value = "/importProcess")
 	@ResponseBody
 	public String importProcess(HttpServletRequest request) {
 		HttpSession session = request.getSession();
+		
+		Object status = session.getAttribute("processTemplateUploadStatus");
+		if (status != null && status == "begin upload") {
+			result.put("wait", true);
+			return JSON.toJSONString(result);
+		}
+		
+		
 		Object process = session.getAttribute(CUR_NUM);
 		int cur = 0;
 		if (process != null) {
@@ -130,22 +177,23 @@ public class ProcessTemplateController extends BaseController {
 		if (all != null) {
 			total = (int)all;
 		}
-		Object end = session.getAttribute(IS_UPLOAD_FINISHED);
-		boolean endFlag = false;
-		if (end != null) {
-			endFlag = (boolean)end;
-		}
-		if (endFlag) {
+//		Object end = session.getAttribute(IS_UPLOAD_FINISHED);
+//		boolean endFlag = false;
+//		if (end != null) {
+//			endFlag = (boolean)end;
+//		}
+//		if (endFlag) {
+		if (cur != total) {
 			//如果上传完成
-			result.put("wait", false);
+			result.put("wait", true);
 			result.put("totalNum", total);
 			result.put("cur", cur);
+//			session.setAttribute(IS_UPLOAD_BEGIN, true);
+//			session.setAttribute(IS_UPLOAD_FINISHED, false);
+		} else {
+			result.put("wait", false);
 			session.setAttribute(IMPORT_NUM, 0);
 			session.setAttribute(CUR_NUM, 0);
-			session.setAttribute(IS_UPLOAD_BEGIN, true);
-			session.setAttribute(IS_UPLOAD_FINISHED, false);
-		} else {
-			result.put("wait", true);
 		}
 		return JSON.toJSONString(result);
 	}

@@ -28,7 +28,7 @@ public class OrderServiceTest extends BaseITTest {
 		InputStream input = new FileInputStream("D:\\program\\workspace\\704station\\src\\test\\resources\\order.xlsx");
 		Workbook wk = null;
 		wk = new XSSFWorkbook(input);
-		orderService.importExcel(wk);
+//		orderService.importExcel(wk);
 		OutputStream os = new FileOutputStream("D:\\program\\workspace\\704station\\src\\test\\resources\\order_error.xlsx");
 		wk.write(os);
 	}

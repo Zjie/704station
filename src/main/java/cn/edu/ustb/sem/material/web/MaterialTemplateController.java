@@ -3,13 +3,16 @@ package cn.edu.ustb.sem.material.web;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSession;
 
+import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,12 +60,38 @@ public class MaterialTemplateController extends BaseController {
 		Workbook wk = null;
 		HttpSession session = request.getSession(true);
 		try {
-			session.setAttribute(IS_UPLOAD_BEGIN, true);
-			session.setAttribute(IS_UPLOAD_FINISHED, false);
+//			session.setAttribute(IS_UPLOAD_BEGIN, true);
+//			session.setAttribute(IS_UPLOAD_FINISHED, false);
 			wk = new XSSFWorkbook(file.getInputStream());
-			session.setAttribute(IS_UPLOAD_BEGIN, false);
-			session.setAttribute(IS_UPLOAD_FINISHED, true);
-			mts.saveExcelFile(wk);
+//			session.setAttribute(IS_UPLOAD_BEGIN, false);
+//			session.setAttribute(IS_UPLOAD_FINISHED, true);
+			
+			int totalNum = wk.getNumberOfSheets();
+			session.setAttribute(MaterialTemplateController.IMPORT_NUM, totalNum);
+			session.setAttribute(MaterialTemplateController.CUR_NUM, 0);
+			session.setAttribute("materialTemplateUploadStatus", "upload end");
+			
+			List<Integer> success = new ArrayList<Integer>();
+			// 循环工作表Sheet
+			for (int numSheet = 0; numSheet < totalNum; numSheet++) {
+				session.setAttribute(MaterialTemplateController.CUR_NUM, numSheet + 1);
+				// 对于每个sheet
+				Sheet hssfSheet = wk.getSheetAt(numSheet);
+				if (hssfSheet == null) {
+					continue;
+				}
+				if (mts.saveSheet(hssfSheet)) {
+					success.add(numSheet);
+				}
+			}
+			for (Integer idx : success)
+				wk.removeSheetAt(idx);
+			
+//			session.setAttribute(IMPORT_NUM, 0);
+//			session.setAttribute(CUR_NUM, 0);
+//			session.setAttribute(IS_UPLOAD_BEGIN, true);
+//			session.setAttribute(IS_UPLOAD_FINISHED, false);
+			
 			if (wk.getNumberOfSheets() > 0) {
 				//如果有保存失败的模板
 				session.setAttribute(ERR_FILE, wk);
@@ -168,11 +197,24 @@ public class MaterialTemplateController extends BaseController {
 		}
 		return getSuccessJsonMsg("保存成功", null);
 	}
+	@RequestMapping(value = "/beginUpload")
+	@ResponseBody
+	public String beginUpload(HttpServletRequest request) {
+		HttpSession session = request.getSession();
+		session.setAttribute("materialTemplateUploadStatus", "begin upload");
+		return "success";
+	}
 	
 	@RequestMapping(value = "/importProcess")
 	@ResponseBody
 	public String importProcess(HttpServletRequest request) {
 		HttpSession session = request.getSession();
+		Object status = session.getAttribute("materialTemplateUploadStatus");
+		if (status != null && status == "begin upload") {
+			result.put("wait", true);
+			return JSON.toJSONString(result);
+		}
+		
 		Object process = session.getAttribute(CUR_NUM);
 		int cur = 0;
 		if (process != null) {
@@ -183,22 +225,23 @@ public class MaterialTemplateController extends BaseController {
 		if (all != null) {
 			total = (int)all;
 		}
-		Object end = session.getAttribute(IS_UPLOAD_FINISHED);
-		boolean endFlag = false;
-		if (end != null) {
-			endFlag = (boolean)end;
-		}
-		if (endFlag) {
+//		Object end = session.getAttribute(IS_UPLOAD_FINISHED);
+//		boolean endFlag = false;
+//		if (end != null) {
+//			endFlag = (boolean)end;
+//		}
+//		if (endFlag) {
+		if (cur != total) {
 			//如果上传完成
-			result.put("wait", false);
+			result.put("wait", true);
 			result.put("totalNum", total);
 			result.put("cur", cur);
-			session.setAttribute(IMPORT_NUM, 0);
-			session.setAttribute(CUR_NUM, 0);
-			session.setAttribute(IS_UPLOAD_BEGIN, true);
-			session.setAttribute(IS_UPLOAD_FINISHED, false);
+//			session.setAttribute(IS_UPLOAD_BEGIN, true);
+//			session.setAttribute(IS_UPLOAD_FINISHED, false);
 		} else {
-			result.put("wait", true);
+			result.put("wait", false);
+			session.setAttribute(IMPORT_NUM, -1);
+			session.setAttribute(CUR_NUM, 0);
 		}
 		return JSON.toJSONString(result);
 	}

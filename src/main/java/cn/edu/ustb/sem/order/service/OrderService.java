@@ -1,8 +1,9 @@
 package cn.edu.ustb.sem.order.service;
 
 import java.util.List;
+import java.util.Map;
 
-import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.ss.usermodel.Row;
 
 import cn.edu.ustb.sem.core.exception.ServiceException;
 import cn.edu.ustb.sem.core.service.BaseService;
@@ -19,7 +20,7 @@ public interface OrderService extends BaseService<Order, OrderModel, Integer> {
 	 * @return 返回出错的行数
 	 * @throws ServiceException
 	 */
-	public int importExcel(Workbook hssfWorkbook) throws ServiceException;
+	public boolean saveRow(Row row, Map<String, Order> excelExistOrder) throws ServiceException;
 	public GridModel<OrderModel> list(OrderSearchForm form, ItemModelHelper<Order, OrderModel> helper) throws ServiceException;
 	public GridModel<OrderModel> listCanAdjustOrder(OrderSearchForm form) throws ServiceException;
 	public List<Order> getAutoScheduleOrder(int pn, int pageSize) throws ServiceException;

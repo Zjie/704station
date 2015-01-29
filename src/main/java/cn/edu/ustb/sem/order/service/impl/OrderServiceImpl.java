@@ -3,18 +3,12 @@ package cn.edu.ustb.sem.order.service.impl;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.servlet.http.HttpSession;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -33,7 +27,6 @@ import cn.edu.ustb.sem.core.pagination.Page;
 import cn.edu.ustb.sem.core.service.impl.BaseServiceImpl;
 import cn.edu.ustb.sem.core.util.DateUtil;
 import cn.edu.ustb.sem.core.util.ExcelUtil;
-import cn.edu.ustb.sem.core.util.ServiceContext;
 import cn.edu.ustb.sem.core.web.model.GridModel;
 import cn.edu.ustb.sem.core.web.model.ItemModelHelper;
 import cn.edu.ustb.sem.material.entity.Material;
@@ -47,7 +40,6 @@ import cn.edu.ustb.sem.order.entity.Order;
 import cn.edu.ustb.sem.order.entity.OrderMaterial;
 import cn.edu.ustb.sem.order.entity.OrderProcess;
 import cn.edu.ustb.sem.order.service.OrderService;
-import cn.edu.ustb.sem.order.web.OrderListController;
 import cn.edu.ustb.sem.order.web.model.OrderModel;
 import cn.edu.ustb.sem.order.web.model.OrderSearchForm;
 import cn.edu.ustb.sem.process.entity.PProcess;
@@ -79,110 +71,85 @@ public class OrderServiceImpl extends
 	}
 
 	@Override
-	public int importExcel(Workbook hssfWorkbook) throws ServiceException {
-		HttpSession session = ServiceContext.getRequest().getSession();
-		List<Row> successOrder = new ArrayList<Row>();
-		// 取第二张表
-		Sheet hssfSheet = hssfWorkbook.getSheetAt(1);
-		int totalNum=hssfSheet.getLastRowNum();
-		int rowNum = 4;
-		session.setAttribute(OrderListController.IMPORT_NUM, totalNum - rowNum);
-		int errorNum = 0;
-		// 从第四行开始
-		// 用来保存excel表中的订单序号，禁止有重复的序号
-		Map<String, Order> excelExistOrder = new HashMap<String, Order>();
-		while (true) {
-			Row row = hssfSheet.getRow(rowNum);
-			rowNum++;
-			if (row == null) {
-				break;
-			}
-			Cell cell = row.getCell(0);
-			if (cell == null || cell.getNumericCellValue() == 0) {
-				break;
-			}
-			Order order = new Order();
-			Visitor v = (Visitor) SecurityContextHolder.getContext()
-					.getAuthentication();
-			order.setTyper(new User(v));
-			order.setUdate(Calendar.getInstance());
-			// 如果解析成功
-			if (parse(row, order, excelExistOrder)) {
-				boolean rowFlag = true;
+	public boolean saveRow(Row row, Map<String, Order> excelExistOrder) throws ServiceException {
+		Cell cell = row.getCell(0);
+		if (cell == null || cell.getNumericCellValue() == 0) {
+			return false;
+		}
+		Order order = new Order();
+		Visitor v = (Visitor) SecurityContextHolder.getContext()
+				.getAuthentication();
+		order.setTyper(new User(v));
+		order.setUdate(Calendar.getInstance());
+		// 如果解析成功
+		if (parse(row, order, excelExistOrder)) {
+			boolean rowFlag = true;
+			
+			excelExistOrder.put(order.getNo(), order);
+			boolean saveOrUpdate;
+			//改为只能新增
+			Order model = new Order();
+			model.setNo(order.getNo());
+			Order exist = this.orderDao.find(model);
+			if (exist != null) {
+				// 更新，只更新基础字段
+				exist.setProject(order.getProject());
+				exist.setProcess(order.getProcess());
+				exist.setModel(order.getModel());
+				exist.setProductName(order.getProductName());
+				exist.setProductCode(order.getProductCode());
+				exist.setPlanToAdjust(order.getPlanToAdjust());
+				exist.setKe2produceNum(order.getKe2produceNum());
+				exist.setKe2DianshiNum(order.getKe2DianshiNum());
+				exist.setDeliveryNum(order.getDeliveryNum());
+				exist.setProductBatchId(order.getProductBatchId());
+				exist.setMaterialsQitaoTime(order.getMaterialsQitaoTime());
+				exist.setComponentCompleteness(order.getComponentCompleteness());
+				exist.setCertificateDate(order.getCertificateDate());
+				exist.setStockInDate(order.getStockInDate());
+				exist.setRemark(order.getRemark());
+				//新增的一些字段 2015/01/20
+				exist.setFactoryRemark(order.getFactoryRemark());
+				exist.setGongyiyuan(order.getGongyiyuan());
+				exist.setPlanAdjustNum(order.getPlanAdjustNum());
+				exist.setLastAdjustDate(order.getLastAdjustDate());
+				exist.setProductType(order.getProductType());
 				
-				excelExistOrder.put(order.getNo(), order);
-				boolean saveOrUpdate;
-				//改为只能新增
-				Order model = new Order();
-				model.setNo(order.getNo());
-				Order exist = this.orderDao.find(model);
-				if (exist != null) {
-					// 更新，只更新基础字段
-					exist.setProject(order.getProject());
-					exist.setProcess(order.getProcess());
-					exist.setModel(order.getModel());
-					exist.setProductName(order.getProductName());
-					exist.setProductCode(order.getProductCode());
-					exist.setPlanToAdjust(order.getPlanToAdjust());
-					exist.setKe2produceNum(order.getKe2produceNum());
-					exist.setKe2DianshiNum(order.getKe2DianshiNum());
-					exist.setDeliveryNum(order.getDeliveryNum());
-					exist.setProductBatchId(order.getProductBatchId());
-					exist.setMaterialsQitaoTime(order.getMaterialsQitaoTime());
-					exist.setComponentCompleteness(order.getComponentCompleteness());
-					exist.setCertificateDate(order.getCertificateDate());
-					exist.setStockInDate(order.getStockInDate());
-					exist.setRemark(order.getRemark());
-					//新增的一些字段 2015/01/20
-					exist.setFactoryRemark(order.getFactoryRemark());
-					exist.setGongyiyuan(order.getGongyiyuan());
-					exist.setPlanAdjustNum(order.getPlanAdjustNum());
-					exist.setLastAdjustDate(order.getLastAdjustDate());
-					exist.setProductType(order.getProductType());
-					
-					orderDao.update(exist);
-					order = exist;
-					saveOrUpdate = false;
-				} else {
-				
-					// 新增
-					order.setStatus(OrderStatus.INITIAL.getIndex());
-					order.setIsAssigned(AssignType.UNFINISHED_ASSIGN);
-					order.setIsReported(YesOrNo.NO.getIndex());
-					order.setIsDispatchMaterial(YesOrNo.NO.getIndex());
-					order.setProcessIsCheck(Order.PROCESS_IS_NOT_CHECKED);
-					order.setAssignStatus(Order.ASSIGN_STATUS_NO);
-					orderDao.save(order);
-					saveOrUpdate = true;
-				}
-				// 绑定物料
-				if (!bindMaterials(order, saveOrUpdate)) {
-					// 如果绑定不成功
-					// 不做绑定的强制限制
-					// rowFlag &= false;
-				}
-				// 绑定工序模板
-				if (!bindProcesses(order)) {
-					// 不做绑定的强制限制
-					// rowFlag &= false;
-				}
-				// 如果完全没有出现错误，则
-				if (rowFlag) {
-					successOrder.add(row);
-				} else {
-					errorNum++;
-				}
+				orderDao.update(exist);
+				order = exist;
+				saveOrUpdate = false;
 			} else {
-				errorNum++;
+			
+				// 新增
+				order.setStatus(OrderStatus.INITIAL.getIndex());
+				order.setIsAssigned(AssignType.UNFINISHED_ASSIGN);
+				order.setIsReported(YesOrNo.NO.getIndex());
+				order.setIsDispatchMaterial(YesOrNo.NO.getIndex());
+				order.setProcessIsCheck(Order.PROCESS_IS_NOT_CHECKED);
+				order.setAssignStatus(Order.ASSIGN_STATUS_NO);
+				orderDao.save(order);
+				saveOrUpdate = true;
 			}
-			session.setAttribute(OrderListController.CUR_NUM, rowNum - 4);
+			// 绑定物料
+			if (!bindMaterials(order, saveOrUpdate)) {
+				// 如果绑定不成功
+				// 不做绑定的强制限制
+				// rowFlag &= false;
+			}
+			// 绑定工序模板
+			if (!bindProcesses(order)) {
+				// 不做绑定的强制限制
+				// rowFlag &= false;
+			}
+			// 如果完全没有出现错误，则
+			if (rowFlag) {
+				return true;
+			} else {
+				return false;
+			}
+		} else {
+			return false;
 		}
-		// 从excel文件中删除已经保存成功的订单的记录
-		Collections.reverse(successOrder);
-		for (Row row : successOrder) {
-			hssfSheet.removeRow(row);
-		}
-		return errorNum;
 	}
 
 	/**
@@ -312,11 +279,8 @@ public class OrderServiceImpl extends
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setProject(cell.getStringCellValue());
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setProject("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "课题编号必须是字符串");
-				flag &= false;
+				o.setProject("");
 			}
 		} else {
 			o.setProject("");
@@ -328,11 +292,8 @@ public class OrderServiceImpl extends
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setProcess(cell.getStringCellValue());
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setProcess("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "主管工艺必须是字符串");
-				flag &= false;
+				o.setProcess("");
 			}
 		} else {
 			o.setProcess("");
@@ -344,11 +305,8 @@ public class OrderServiceImpl extends
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setModel(cell.getStringCellValue());
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setModel("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "使用型号必须是字符串");
-				flag &= false;
+				o.setModel("");
 			}
 		} else {
 			o.setModel("");
@@ -404,6 +362,8 @@ public class OrderServiceImpl extends
 				o.setPlanToAdjust("0");
 			} else if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setPlanToAdjust(cell.getStringCellValue());
+			} else {
+				o.setPlanToAdjust("0");
 			}
 		}
 		// 科二的计划投产数量
@@ -421,11 +381,8 @@ public class OrderServiceImpl extends
 				} else {
 					o.setKe2produceNum(tmp);
 				}
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setKe2produceNum("0");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "科二投产数量必须是数字");
-				flag &= false;
+				o.setKe2produceNum("0");
 			}
 		}
 		//车间计划数量
@@ -443,11 +400,8 @@ public class OrderServiceImpl extends
 				} else {
 					o.setProduceNum(Integer.parseInt(tmp));
 				}
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setProduceNum(0);
 			} else {
-				ExcelUtil.createCommentForCell(cell, "车间计划数量必须是数字");
-				flag &= false;
+				o.setProduceNum(0);
 			}
 		}
 		// 交付数量
@@ -465,11 +419,8 @@ public class OrderServiceImpl extends
 				} else {
 					o.setDeliveryNum(Integer.parseInt(tmp));
 				}
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setDeliveryNum(0);
 			} else {
-				ExcelUtil.createCommentForCell(cell, "交付数量必须是数字");
-				flag &= false;
+				o.setDeliveryNum(0);
 			}
 		}
 		// 科二的计划典试数量
@@ -487,11 +438,8 @@ public class OrderServiceImpl extends
 				} else {
 					o.setKe2DianshiNum(tmp);
 				}
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setKe2DianshiNum("0");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "科二典试数量必须是数字");
-				flag &= false;
+				o.setKe2DianshiNum("0");
 			}
 		}
 		
@@ -510,11 +458,8 @@ public class OrderServiceImpl extends
 				} else {
 					o.setTestNum(Integer.parseInt(tmp));
 				}
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setTestNum(0);
 			} else {
-				ExcelUtil.createCommentForCell(cell, "典试计划数量必须是数字");
-				flag &= false;
+				o.setTestNum(0);
 			}
 		}
 
@@ -526,68 +471,37 @@ public class OrderServiceImpl extends
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setProductBatchId(cell.getStringCellValue());
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				
 			} else {
-				ExcelUtil.createCommentForCell(cell, "产品批次必须是字符串");
-				flag &= false;
+				o.setProductBatchId("");
 			}
 		}
 		// 物资齐套时间
 		cell = row.getCell(11);
 		if (cell == null) {
-			ExcelUtil.createCommentForCell(cell, "物资齐套时间不能为空，物资齐套时间格式必须是yyyyMMdd");
-			flag &= false;
+			o.setMaterialsQitaoTime("");
 		} else {
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
-				try {
-					o.setMaterialsQitaoTime(DateUtil.parseDate(cell.getStringCellValue(), "yyyyMMdd"));
-				} catch (Exception e) {
-					ExcelUtil.createCommentForCell(cell, "物资齐套时间格式必须是yyyyMMdd，例如20141212");
-					flag &= false;
-					logger.error(e);
-				}
+				o.setMaterialsQitaoTime(cell.getStringCellValue());
 			} else if (cellType == Cell.CELL_TYPE_NUMERIC) {
-				try {
-					o.setMaterialsQitaoTime(DateUtil.parseDate(new Double(cell.getNumericCellValue()).intValue() + "", "yyyyMMdd"));
-				} catch (Exception e) {
-					ExcelUtil.createCommentForCell(cell, "物资齐套时间格式必须是yyyyMMdd，例如20141212");
-					flag &= false;
-					logger.error(e);
-				}
+				o.setMaterialsQitaoTime(new Double(cell.getNumericCellValue()).intValue() + "");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "物资齐套时间格式必须是yyyyMMdd");
-				flag &= false;
+				o.setMaterialsQitaoTime("");
 			}
 		}
 
 		// 零件齐套时间
 		cell = row.getCell(12);
 		if (cell == null) {
-			ExcelUtil.createCommentForCell(cell, "零件齐套时间不能为空，零件齐套时间格式必须是yyyyMMdd，例如20141212");
-			flag &= false;
+			o.setComponentCompleteness("");
 		} else {
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
-				try {
-					o.setComponentCompleteness(DateUtil.parseDate(cell.getStringCellValue(), "yyyyMMdd"));
-				} catch (Exception e) {
-					ExcelUtil.createCommentForCell(cell, "零件齐套时间格式必须是yyyyMMdd，例如20141212");
-					flag &= false;
-					logger.error(e);
-				}
+				o.setComponentCompleteness(cell.getStringCellValue());
 			} else if (cellType == Cell.CELL_TYPE_NUMERIC) {
-				try {
-					o.setComponentCompleteness(DateUtil.parseDate(new Double(cell.getNumericCellValue()).intValue() + "", "yyyyMMdd"));
-				} catch (Exception e) {
-					ExcelUtil.createCommentForCell(cell, "零件齐套时间格式必须是yyyyMMdd，例如20141212");
-					flag &= false;
-					logger.error(e);
-				}
+				o.setComponentCompleteness(new Double(cell.getNumericCellValue()).intValue() + "");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "零件齐套时间必须是日期，例如2014-09-08");
-				flag &= false;
+				o.setComponentCompleteness("");
 			}
 		}
 		// 证书完成时间
@@ -601,11 +515,8 @@ public class OrderServiceImpl extends
 			} else if (cellType == Cell.CELL_TYPE_NUMERIC) {
 				o.setCertificateDate(new Double(cell.getNumericCellValue())
 						.intValue() + "");
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setCertificateDate("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "证书完成时间必须是由字符或数字组成");
-				flag &= false;
+				o.setCertificateDate("");
 			}
 		}
 		// 入库进度
@@ -619,11 +530,8 @@ public class OrderServiceImpl extends
 			} else if (cellType == Cell.CELL_TYPE_NUMERIC) {
 				o.setStockInDate(new Double(cell.getNumericCellValue()).intValue()
 						+ "");
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setStockInDate("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "入库进度必须是由字符或数字组成");
-				flag &= false;
+				o.setStockInDate("");
 			}
 		}
 		// 科二备注
@@ -634,11 +542,8 @@ public class OrderServiceImpl extends
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setRemark(cell.getStringCellValue());
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setRemark("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "科二备注必须是由字符组成");
-				flag &= false;
+				o.setRemark("");
 			}
 		}
 		// 班组
@@ -649,11 +554,8 @@ public class OrderServiceImpl extends
 			cellType = cell.getCellType();
 			if (cellType == Cell.CELL_TYPE_STRING) {
 				o.setBanzu(cell.getStringCellValue());
-			} else if (cellType == Cell.CELL_TYPE_BLANK) {
-				o.setBanzu("");
 			} else {
-				ExcelUtil.createCommentForCell(cell, "科二备注必须是由字符组成");
-				flag &= false;
+				o.setBanzu("");
 			}
 		}
 		// 订单编号
@@ -705,31 +607,31 @@ public class OrderServiceImpl extends
 		try {
 			o.setFactoryRemark(ExcelUtil.getCellStringCanNull(row, 63, "车间备注"));
 		} catch (CellParseException e) {
-			flag &= false;
+//			flag &= false;
 		}
 		//产品类别
 		try {
 			o.setProductType(ExcelUtil.getCellStringCanNull(row, 62, "产品类别"));
 		} catch (CellParseException e) {
-			flag &= false;
+//			flag &= false;
 		}
 		//工艺员
 		try {
 			o.setGongyiyuan(ExcelUtil.getCellStringCanNull(row, 16, "工艺员"));
 		} catch (CellParseException e) {
-			flag &= false;
+//			flag &= false;
 		}
 		//计划更改次数
 		try {
 			o.setPlanAdjustNum(ExcelUtil.getCellStringCanNull(row, 23, "计划更改次数"));
 		} catch (CellParseException e) {
-			flag &= false;
+//			flag &= false;
 		}
 		//最近一次计划更改日期
 		try {
 			o.setLastAdjustDate(ExcelUtil.getCellStringCanNull(row, 22, "最近一次计划更改日期"));
 		} catch (CellParseException e) {
-			flag &= false;
+//			flag &= false;
 		}
 		Visitor v = (Visitor) SecurityContextHolder.getContext()
 				.getAuthentication();
@@ -840,6 +742,11 @@ public class OrderServiceImpl extends
 		if (condition.getMaterialIsCheck() != null) {
 			model.setMaterialIsChecked(condition.getMaterialIsCheck());
 		}
+		
+		if (condition.getGongyi() != null && !condition.getGongyi().isEmpty())
+			model.setGongyiyuan(condition.getGongyi());
+		if (condition.getProductType() != null && !condition.getProductType().isEmpty())
+			model.setProductType(condition.getProductType());
 		return model;
 	}
 
@@ -899,8 +806,8 @@ public class OrderServiceImpl extends
 				oldOrder.setOnlineDate(DateUtil.parseDate(order.getOnlineDate()));
 				//物料齐套时间
 				oldOrder.setMaterialsCompleteness(DateUtil.parseDate(order.getMaterialsCompleteness()));
-				oldOrder.setComponentCompleteness(DateUtil.parseDate(order.getComponentCompleteness()));
-				oldOrder.setMaterialsQitaoTime(DateUtil.parseDate(order.getMaterialsQitaoTime()));
+				oldOrder.setComponentCompleteness(order.getComponentCompleteness());
+				oldOrder.setMaterialsQitaoTime(order.getMaterialsQitaoTime());
 			} catch (ParseException e) {
 				e.printStackTrace();
 			}

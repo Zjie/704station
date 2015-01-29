@@ -1,8 +1,6 @@
 package cn.edu.ustb.sem.material.service.impl;
 
-import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -12,12 +10,9 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import javax.servlet.http.HttpSession;
-
 import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -29,7 +24,6 @@ import cn.edu.ustb.sem.core.dao.BaseDao;
 import cn.edu.ustb.sem.core.exception.ServiceException;
 import cn.edu.ustb.sem.core.service.impl.BaseServiceImpl;
 import cn.edu.ustb.sem.core.util.ExcelUtil;
-import cn.edu.ustb.sem.core.util.ServiceContext;
 import cn.edu.ustb.sem.core.web.model.GridModel;
 import cn.edu.ustb.sem.core.web.model.ItemModelHelper;
 import cn.edu.ustb.sem.material.dao.MaterialDao;
@@ -42,7 +36,6 @@ import cn.edu.ustb.sem.material.entity.MtProductCode;
 import cn.edu.ustb.sem.material.entity.Mtm;
 import cn.edu.ustb.sem.material.service.MaterialService;
 import cn.edu.ustb.sem.material.service.MaterialTemplateService;
-import cn.edu.ustb.sem.material.web.MaterialTemplateController;
 import cn.edu.ustb.sem.material.web.model.MaterialModel;
 import cn.edu.ustb.sem.material.web.model.MaterialTemplateModel;
 import cn.edu.ustb.sem.material.web.model.MaterialTemplateSearchModel;
@@ -68,32 +61,16 @@ public class MaterialTemplateServiceImpl extends
 		this.materialTemplateDao = (MaterialTemplateDao) baseDao;
 	}
 	@Override
-	public void saveExcelFile(Workbook hssfWorkbook)
+	public boolean saveSheet(Sheet sheet)
 			throws ServiceException {
-		HttpSession session = ServiceContext.getRequest().getSession();
-		int totalNum = hssfWorkbook.getNumberOfSheets();
-		session.setAttribute(MaterialTemplateController.IMPORT_NUM, totalNum);
-		List<Integer> successMt = new ArrayList<Integer>();
-		// 循环工作表Sheet
-		for (int numSheet = 0; numSheet < totalNum; numSheet++) {
-			// 对于每个sheet
-			Sheet hssfSheet = hssfWorkbook.getSheetAt(numSheet);
-			if (hssfSheet == null) {
-				continue;
-			}
-			MaterialTemplate mt = new MaterialTemplate();
-			//解析得到模板（包含数据有效性检验），如果解析并验证成功，则保存到数据库中
-			if (parseMt(mt, hssfSheet)) {
-				//保存模板
-				saveMt(mt);
-				successMt.add(numSheet);
-			}
-			session.setAttribute(MaterialTemplateController.CUR_NUM, numSheet + 1);
-		}
-		//删除已经保存成功的模板
-		Collections.reverse(successMt);
-		for (Integer s : successMt) {
-			hssfWorkbook.removeSheetAt(s);
+		MaterialTemplate mt = new MaterialTemplate();
+		//解析得到模板（包含数据有效性检验），如果解析并验证成功，则保存到数据库中
+		if (parseMt(mt, sheet)) {
+			//保存模板
+			saveMt(mt);
+			return true;
+		} else {
+			return false;
 		}
 	}
 	/**
@@ -192,6 +169,7 @@ public class MaterialTemplateServiceImpl extends
 		boolean flag = true;
 		String type = "";
 		Set<Mtm> allMaterials = new HashSet<Mtm>();
+		String lastType = null;
 		while (true) {
 			//这个用来记录一行记录是否全为空，如果全为空，说明这是行的结束
 			int rowNullCount = 0;
@@ -203,10 +181,15 @@ public class MaterialTemplateServiceImpl extends
 			Material material = new Material();
 			//物料类别
 			cell = row.getCell(0);
-			if (cell != null) {
-				type = cell.getStringCellValue();
+			if (cell == null) {
+				type = lastType;
 			} else {
-				rowNullCount++;
+				type = cell.getStringCellValue();
+				if (type == null || type.isEmpty()) {
+					type = lastType;
+				} else {
+					lastType = type;
+				}
 			}
 			material.setType(type);
 			//序号 不能为空
@@ -229,36 +212,46 @@ public class MaterialTemplateServiceImpl extends
 			if (cell != null) {
 				if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
 					material.setName(cell.getStringCellValue());
+				} else {
+					ExcelUtil.createCommentForCell(cell, "名称不能为空");
+					flag &= false;
+					errorCount++;
 				}
 			} else {
 				rowNullCount++;
 			}
-			//型号规格 不能为空
+			//型号规格 可以为空
 			cell = row.getCell(3);
 			if (cell != null) {
 				if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
 					material.setSpecification(cell.getStringCellValue());
+				} else {
+					material.setSpecification("");
 				}
 			} else {
-				rowNullCount++;
+				material.setSpecification("");
 			}
 			//质量等级或标准
 			cell = row.getCell(4);
 			if (cell != null) {
 				if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
 					material.setLevel(cell.getStringCellValue());
+				} else {
+					material.setLevel("");
 				}
 			} else {
-				rowNullCount++;
+				material.setLevel("");
 			}
 			//计量单位 可以为空
 			cell = row.getCell(5);
 			if (cell != null) {
 				if (cell.getCellType() == Cell.CELL_TYPE_STRING) {
 					material.setUom(cell.getStringCellValue());
+				} else {
+					material.setUom("");
 				}
 			} else {
-				rowNullCount++;
+				material.setUom("");
 			}
 			//单机个数
 			cell = row.getCell(6);
@@ -287,11 +280,13 @@ public class MaterialTemplateServiceImpl extends
 			if (cell != null) {
 				if (cell.getCellType() != Cell.CELL_TYPE_NUMERIC) {
 					material.setBackupNum((int)cell.getNumericCellValue());
+				} else {
+					material.setBackupNum(0);
 				}
 			} else  {
-				rowNullCount++;
+				material.setBackupNum(0);
 			}
-			if (rowNullCount >= 8) {
+			if (rowNullCount >= 4) {
 				break;
 			}
 			rowNum++;

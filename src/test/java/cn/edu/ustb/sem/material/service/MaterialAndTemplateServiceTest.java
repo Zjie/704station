@@ -42,10 +42,8 @@ public class MaterialAndTemplateServiceTest extends BaseITTest {
 			input = new FileInputStream("D:\\program\\workspace\\704station\\src\\test\\resources\\material_template.xlsx");
 			wk = new XSSFWorkbook(input);
 			os = new FileOutputStream("D:\\program\\workspace\\704station\\src\\test\\resources\\material_template_error.xlsx");
-			materialTemplateService.saveExcelFile(wk);
+//			materialTemplateService.saveExcelFile(wk);
 			wk.write(os);
-		} catch (ServiceException e) {
-			e.printStackTrace();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {

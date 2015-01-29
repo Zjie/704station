@@ -143,10 +143,10 @@ public class Order implements Serializable {
 	private Calendar materialsCompleteness;
 	//零件齐套时间
 	@Column(name = "component_completeness", nullable = true)
-	private Calendar componentCompleteness;
-	//物资齐套时间
+	private String componentCompleteness;
+	//物资齐套时间，订单导入用得
 	@Column(name = "materials_qitao_time", nullable = true)
-	private Calendar materialsQitaoTime;
+	private String materialsQitaoTime;
 	
 	//物料是否已经配齐---cwm
 	@Column(name = "is_assigned")
@@ -636,16 +636,16 @@ public class Order implements Serializable {
 	public void setReportedNum(Integer reportedNum) {
 		this.reportedNum = reportedNum;
 	}
-	public Calendar getComponentCompleteness() {
+	public String getComponentCompleteness() {
 		return componentCompleteness;
 	}
-	public void setComponentCompleteness(Calendar componentCompleteness) {
+	public void setComponentCompleteness(String componentCompleteness) {
 		this.componentCompleteness = componentCompleteness;
 	}
-	public Calendar getMaterialsQitaoTime() {
+	public String getMaterialsQitaoTime() {
 		return materialsQitaoTime;
 	}
-	public void setMaterialsQitaoTime(Calendar materialsQitaoTime) {
+	public void setMaterialsQitaoTime(String materialsQitaoTime) {
 		this.materialsQitaoTime = materialsQitaoTime;
 	}
 	public Set<ProduceAssembled> getAssembled() {

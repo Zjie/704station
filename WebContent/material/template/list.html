@@ -208,35 +208,46 @@ Ext.onReady(function() {
 				        width:300,    
 				        progress:true   
 				    });
-				    var task = {    
-				        run:function(){
-				        	$.ajax({
-						        type: "POST",
-						        url: "importProcess.do",
-						        success: function(data) {
-						            var result = eval('(' + data + ')'); 
-						            if (!result.wait) {
-										//生成进度条文字    
-							            var progressText = '当前完成度:' + result.cur + '/' + result.totalNum;    
-							            //更新信息提示对话框    
-							            msgBox.updateProgress(result.cur/result.totalNum, progressText, '');     
-							            if (result.totalNum == result.cur)    
-							            {
-							                Ext.TaskManager.stop(task);
-							                Ext.Msg.alert('系统提示', uploadMsg, 
-												function(buttonId, text, opt) {
-						                        	msgBox.hide();
-						                        	window.location.href = finalUrl;
+
+					$.ajax({
+				        type: "POST",
+				        url: "beginUpload.do",
+				        success: function(data) {
+				        	if (data != 'success') {
+				        		alert("系统错误，请联系管理员");
+				        		return;
+				        	}
+				        	var task = {    
+						        run:function(){
+						        	$.ajax({
+								        type: "POST",
+								        url: "importProcess.do",
+								        success: function(data) {
+								            var result = eval('(' + data + ')'); 
+								            if (result.wait) {
+												//生成进度条文字    
+									            var progressText = '当前完成度:' + result.cur + '/' + result.totalNum;    
+									            //更新信息提示对话框    
+									            msgBox.updateProgress(result.cur/result.totalNum, progressText, '');  
+									        } else {
+								                Ext.TaskManager.stop(task);
+								                Ext.Msg.alert('系统提示', uploadMsg, 
+													function(buttonId, text, opt) {
+							                        	msgBox.hide();
+							                        	window.location.href = finalUrl;
 						                        });
-							            }
-						            }
-						            
-						        }
-						    });
-				        },    
-				        interval:3000    
-				    }    
-				    Ext.TaskManager.start(task);
+								            }
+								            
+								        }
+								    });
+						        },    
+						        interval:1000    
+						    }    
+						    Ext.TaskManager.start(task);
+				        }
+				    });
+
+				    
 				}
 			}
 		},{

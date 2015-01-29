@@ -26,6 +26,12 @@ public class OrderSearchForm extends SearchFormModel {
 	private Byte status;
 	//班组
 	private String banzu;
+	
+	//2015-01-29
+	private String productType;
+	private String gongyi;
+	
+	
 	//是否确认物料信息
 	private Byte materialIsCheck;
 	
@@ -121,6 +127,18 @@ public class OrderSearchForm extends SearchFormModel {
 	}
 	public void setMaterialIsCheck(Byte materialIsCheck) {
 		this.materialIsCheck = materialIsCheck;
+	}
+	public String getProductType() {
+		return productType;
+	}
+	public void setProductType(String productType) {
+		this.productType = productType;
+	}
+	public String getGongyi() {
+		return gongyi;
+	}
+	public void setGongyi(String gongyi) {
+		this.gongyi = gongyi;
 	}
 	
 }
