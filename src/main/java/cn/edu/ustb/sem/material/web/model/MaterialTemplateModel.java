@@ -82,5 +82,4 @@ public class MaterialTemplateModel {
 	public void setUpdater(String updater) {
 		this.updater = updater;
 	}
-	
 }

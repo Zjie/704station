@@ -86,13 +86,13 @@ public class MaterialModel {
 	public double getSingleNum() {
 		return singleNum;
 	}
-	public void setSingleNum(int singleNum) {
+	public void setSingleNum(double singleNum) {
 		this.singleNum = singleNum;
 	}
 	public double getBkNum() {
 		return bkNum;
 	}
-	public void setBkNum(int bkNum) {
+	public void setBkNum(double bkNum) {
 		this.bkNum = bkNum;
 	}
 	

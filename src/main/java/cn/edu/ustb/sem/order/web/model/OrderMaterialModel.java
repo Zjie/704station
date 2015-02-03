@@ -113,7 +113,7 @@ public class OrderMaterialModel {
 		return updater;
 	}
 
-	public void setBkNum(int bkNum) {
+	public void setBkNum(double bkNum) {
 		this.bkNum = bkNum;
 	}
 
@@ -133,7 +133,7 @@ public class OrderMaterialModel {
 		this.orderNo = orderNo;
 	}
 
-	public void setSingleNum(int singleNum) {
+	public void setSingleNum(double singleNum) {
 		this.singleNum = singleNum;
 	}
 
@@ -157,7 +157,7 @@ public class OrderMaterialModel {
 		return totalAssign;
 	}
 
-	public void setTotalAssign(int totalAssign) {
+	public void setTotalAssign(double totalAssign) {
 		this.totalAssign = totalAssign;
 	}
 
@@ -165,7 +165,7 @@ public class OrderMaterialModel {
 		return leftAssign;
 	}
 
-	public void setLeftAssign(int leftAssign) {
+	public void setLeftAssign(double leftAssign) {
 		this.leftAssign = leftAssign;
 	}
 
@@ -185,7 +185,7 @@ public class OrderMaterialModel {
 		return allNum;
 	}
 
-	public void setAllNum(int allNum) {
+	public void setAllNum(double allNum) {
 		this.allNum = allNum;
 	}
 
@@ -193,7 +193,7 @@ public class OrderMaterialModel {
 		return diffNum;
 	}
 
-	public void setDiffNum(int diffNum) {
+	public void setDiffNum(double diffNum) {
 		this.diffNum = diffNum;
 	}
 	

@@ -117,7 +117,7 @@ public class OrderProcessModel {
 		return measure;
 	}
 
-	public void setMeasure(int measure) {
+	public void setMeasure(double measure) {
 		this.measure = measure;
 	}
 

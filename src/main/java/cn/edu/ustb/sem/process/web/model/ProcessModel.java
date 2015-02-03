@@ -54,7 +54,7 @@ public class ProcessModel {
 	public double getMeasure() {
 		return measure;
 	}
-	public void setMeasure(int measure) {
+	public void setMeasure(double measure) {
 		this.measure = measure;
 	}
 	public String getRemark() {
