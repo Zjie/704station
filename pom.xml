@@ -11,7 +11,7 @@
 	
 	<!-- 版本 -->
 	<properties>
-		<java.home>/Library/Java/JavaVirtualMachines/jdk1.8.0_25.jdk/Contents/Home</java.home>
+		<java.home>/Library/Java/JavaVirtualMachines/jdk1.7.0_71.jdk/Contents/Home</java.home>
 		
 		<spring.version>4.0.0.RELEASE</spring.version>
 		<spring-data-commons-core.version>1.4.1.RELEASE</spring-data-commons-core.version>
@@ -340,6 +340,13 @@
 			<artifactId>commons-fileupload</artifactId>
 			<version>${commons-fileupload.version}</version>
 		</dependency>
+		
+		<dependency>  
+            <groupId>com.onbarcode</groupId>  
+            <artifactId>onbarcode</artifactId>  
+            <version>1.0</version>  
+        </dependency>
+				
 	</dependencies>
 	
 	<!-- 编译打包 -->
@@ -363,10 +370,11 @@
 						</compilerArguments>
 					</configuration>
 				</plugin>
-				<plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-war-plugin</artifactId>
-					<version>2.1</version>
-					<configuration>
+					<version>2.6</version>
+                    <configuration>
 						<webappDirectory>WebContent</webappDirectory>
 					</configuration>
 				</plugin>
@@ -374,7 +382,7 @@
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-resources-plugin</artifactId>
-					<version>2.6</version>
+					<version>2.7</version>
 				</plugin>
 				<!-- 增加更多的Source和Test Source目录插件 -->
 				<plugin>

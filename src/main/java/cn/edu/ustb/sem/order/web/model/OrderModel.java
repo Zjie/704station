@@ -244,11 +244,20 @@ public class OrderModel {
 		this.canDianshiNum = bo.getTestNum() - this.dianshiedNum - this.dianshiingNum;
 		
 		//是否完成报工的条件为：投产数量=完成数量 且 典试数量=完成数量
+		if (bo.getIsReported() == ProduceAssembling.REPORTED) {
+			this.isReported = "已完成";
+		} else if (bo.getIsReported() == ProduceAssembling.REPORTING) {
+			this.isReported = "在制";
+		} else if (bo.getIsReported() == ProduceAssembling.NOT_REPORT) {
+			this.isReported = "未开始";
+		}
+		/**
 		if (this.assembledNum == this.produceNum && this.dianshiedNum == this.testNum) {
 			this.isReported = "是";
 		} else {
 			this.isReported = "否";
 		}
+		**/
 		
 		this.ke2DianshiNum = bo.getKe2DianshiNum();
 		this.ke2ProduceNum = bo.getKe2produceNum();

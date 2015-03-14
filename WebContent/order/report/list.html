@@ -70,7 +70,7 @@ Ext.onReady(function() {
 						valueField: 'value',
 						store: new Ext.data.SimpleStore({
 							fields:['value','text'],
-							data:[[2,'全部'],[1,'是'],[0,'否']]
+							data:[[-1,'全部'],[0,'未报工'],[1,'已完成'],[2,'在制']]
 						}) 
 					}]
 				}
@@ -128,7 +128,7 @@ Ext.onReady(function() {
 	        dataIndex: 'no',
 	        //sortable: false
 	    },{
-	    	text: "是否完成报工",
+	    	text: "报工状态",
 	    	dataIndex: 'isReported',
 	    	sortable:false
 	    },{

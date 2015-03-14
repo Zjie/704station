@@ -715,7 +715,7 @@ public class OrderServiceImpl extends
 			model.setAssignStatus(condition.getAssignStatus());
 		}
 		// 增加是否报工完成的查询条件---cwm
-		if (condition.getIsReported() != null && condition.getIsReported() != 2) {
+		if (condition.getIsReported() != null && condition.getIsReported() >= 0) {
 			model.setIsReported(condition.getIsReported());
 		}
 		// 增加订单状态---cwm

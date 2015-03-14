@@ -166,10 +166,15 @@ Ext.onReady(function() {
 	        dataIndex: 'reportTime',
 	        //sortable: false
 	    },{
+	    	text: '可报工数量',
+	    	xtype: "templatecolumn",
+	    	width:110,
+	    	tpl: "<span>{leftNum}个</span>"
+	    },{
 	    	text: '报工操作',
 	    	xtype: "templatecolumn",
 	    	width:130,
-	    	tpl: "<input type='text' value='还可报工{leftNum}个' id='report{id}' style='width:120px; color:#999999' onfocus='initText(this)' onkeyup='check(this,{leftNum})' onblur='setText(this,{leftNum})'></input>"
+	    	tpl: "<input type='text' id='report{id}' style='width:120px; color:#999999' onkeyup='check(this,{leftNum})''></input>"
 	    },{
 	    	text: '操作耗时/小时',
 	    	xtype: "templatecolumn",
@@ -281,7 +286,7 @@ function save() {
 	}
 }
 //点击文本框时，初始化文本值及样式
-function initText(o){
+function initText(o) {
 	if(o.value.indexOf("还")!=-1){
 		o.value="";
 	}

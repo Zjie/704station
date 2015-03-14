@@ -26,7 +26,7 @@
                 <td>产品代号：${order.productCode}</td>
                 <td>
                     <!-- 用订单编号去确定一个订单，而不是订单id -->
-                	<img src="genCode.do?code=${order.no}-${worker.id}-${order.productCode}&barType=CODE128&checkCharacter=n&checkCharacterInText=n">
+                	<img src="genCode.do?code=${order.no}-${worker.id}-${order.productCode}">
                 </td>
             </tr>
             <tr>
@@ -66,7 +66,8 @@
     </div>
 <script>
 $(function(){
-	printpreview();
+    window.print();
+	//printpreview();
 })
 //打印页面预览
 

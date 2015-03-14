@@ -9,6 +9,10 @@
 </head>
 <body>
     <div id="reportPanel">
+        <input id="code" style="width:200px"/>
+        <button onclick="doDispatch()">确定报工</button>
+        <br />
+        <span style="color:red;font-size:12px;">如果无法扫出条形码，请手动输入条形码下面的字符串</span>
     </div>
 <script type="text/javascript">
 Ext.onReady(function(){
@@ -40,6 +44,12 @@ Ext.onReady(function(){
             trackOver: false,
             stripeRows: false
         },
+        listeners: {
+            itemdblclick: function(g, record, item, index, e, eOpts ){
+                var id = record.data.id;
+                window.location.href = 'report.do?oid=' + id;
+            }
+        },
         columns:[{
             hidden: true,
             text: "id",
@@ -50,8 +60,7 @@ Ext.onReady(function(){
             xtype: "templatecolumn",
             // tpl: "<a href='report.do?oid={id}'>报工</a>",
             tpl :new Ext.XTemplate(
-                '<tpl if="isReported==\'是\'"><a style="color:#C0C0C0">查看</tpl>',
-                '<tpl if="isReported==\'否\'"><a style="color:blue" href = "report.do?oid={id}">报工</tpl>'
+                '<a style="color:blue" href = "report.do?oid={id}">报工</a>'
             )
         },{
             text: "订单编号",
